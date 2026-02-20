@@ -1,65 +1,108 @@
-import Image from "next/image";
+import { createServerSupabaseClient } from "@/lib/supabase-server";
+import { MainLayout, ContentHeader } from "@/components/layout";
+import { PostCard } from "@/components/post";
+import { Stack, Grid, Button, Icon } from "@/components/ui";
+import type { Post, Profile } from "@/types";
 
-export default function Home() {
+interface PageProps {
+  searchParams: Promise<{ sort?: string }>;
+}
+
+async function getProfile(): Promise<Profile | null> {
+  const supabase = await createServerSupabaseClient();
+  
+  const { data } = await supabase
+    .from("profiles")
+    .select("*")
+    .limit(1)
+    .single();
+  
+  return data;
+}
+
+async function getLatestPosts(): Promise<Post[]> {
+  const supabase = await createServerSupabaseClient();
+  
+  const { data } = await supabase
+    .from("posts")
+    .select("*")
+    .eq("is_published", true)
+    .order("created_at", { ascending: false })
+    .limit(9);
+  
+  return data || [];
+}
+
+async function getPopularPosts(): Promise<Post[]> {
+  const supabase = await createServerSupabaseClient();
+  
+  // 7일 이내 게시물 중 조회수 순으로 정렬
+  const sevenDaysAgo = new Date();
+  sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
+  
+  const { data } = await supabase
+    .from("posts")
+    .select("*")
+    .eq("is_published", true)
+    .gte("created_at", sevenDaysAgo.toISOString())
+    .order("view_count", { ascending: false })
+    .limit(9);
+  
+  return data || [];
+}
+
+export default async function HomePage({ searchParams }: PageProps) {
+  const { sort } = await searchParams;
+  const profile = await getProfile();
+  const posts = sort === "popular" ? await getPopularPosts() : await getLatestPosts();
+
   return (
-    <div className="flex min-h-screen items-center justify-center bg-zinc-50 font-sans dark:bg-black">
-      <main className="flex min-h-screen w-full max-w-3xl flex-col items-center justify-between py-32 px-16 bg-white dark:bg-black sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={100}
-          height={20}
-          priority
-        />
-        <div className="flex flex-col items-center gap-6 text-center sm:items-start sm:text-left">
-          <h1 className="max-w-xs text-3xl font-semibold leading-10 tracking-tight text-black dark:text-zinc-50">
-            To get started, edit the page.tsx file.
+    <MainLayout profile={profile}>
+      <ContentHeader />
+
+      <div className="px-6 lg:px-8 py-8">
+        {/* Hero Section */}
+        <div className="mb-12">
+          <h1 className="text-3xl md:text-4xl lg:text-5xl font-bold text-zinc-900 dark:text-zinc-100 mb-4">
+            Curated Thoughts & Digital
+            <br />
+            Experiences
           </h1>
-          <p className="max-w-md text-lg leading-8 text-zinc-600 dark:text-zinc-400">
-            Looking for a starting point or more instructions? Head over to{" "}
-            <a
-              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Templates
-            </a>{" "}
-            or the{" "}
-            <a
-              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Learning
-            </a>{" "}
-            center.
+          <p className="text-lg text-zinc-500 dark:text-zinc-400 max-w-xl">
+            {profile?.bio || "Exploring the intersection of minimal aesthetics and high-performance engineering."}
           </p>
         </div>
-        <div className="flex flex-col gap-4 text-base font-medium sm:flex-row">
-          <a
-            className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-foreground px-5 text-background transition-colors hover:bg-[#383838] dark:hover:bg-[#ccc] md:w-[158px]"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={16}
-              height={16}
-            />
-            Deploy Now
-          </a>
-          <a
-            className="flex h-12 w-full items-center justify-center rounded-full border border-solid border-black/[.08] px-5 transition-colors hover:border-transparent hover:bg-black/[.04] dark:border-white/[.145] dark:hover:bg-[#1a1a1a] md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Documentation
-          </a>
-        </div>
-      </main>
-    </div>
+
+        {/* Posts Grid */}
+        <Grid cols={1} colsMd={2} colsLg={3} gap="lg">
+          {posts.map((post) => (
+            <PostCard key={post.id} post={post} variant="featured" />
+          ))}
+        </Grid>
+
+        {/* Empty State */}
+        {posts.length === 0 && (
+          <div className="text-center py-16">
+            <Icon name="bookmark" size="xl" className="text-zinc-300 dark:text-zinc-600 mx-auto mb-4" />
+            <p className="text-zinc-500 dark:text-zinc-400">
+              아직 등록된 게시글이 없습니다.
+            </p>
+          </div>
+        )}
+
+        {/* Load More */}
+        {posts.length > 0 && (
+          <Stack align="center" className="mt-12">
+            <Button
+              variant="outline"
+              size="lg"
+              rightIcon={<Icon name="arrow-down" size="sm" />}
+            >
+              Load More Entries
+            </Button>
+          </Stack>
+        )}
+      </div>
+    </MainLayout>
   );
 }
