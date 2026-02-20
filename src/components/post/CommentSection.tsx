@@ -42,11 +42,12 @@ interface CommentItemProps {
   comment: Comment;
   replies: Comment[];
   adminAvatarUrl?: string | null;
+  adminUsername?: string;
   isLoggedIn: boolean;
   onSubmitReply: (parentId: string, content: string, nickname: string, password: string) => Promise<void>;
 }
 
-function CommentItem({ comment, replies, adminAvatarUrl, isLoggedIn, onSubmitReply }: CommentItemProps) {
+function CommentItem({ comment, replies, adminAvatarUrl, adminUsername, isLoggedIn, onSubmitReply }: CommentItemProps) {
   const [showReplyForm, setShowReplyForm] = useState(false);
   const [replyContent, setReplyContent] = useState("");
   const [replyNickname, setReplyNickname] = useState("");
@@ -61,7 +62,7 @@ function CommentItem({ comment, replies, adminAvatarUrl, isLoggedIn, onSubmitRep
     await onSubmitReply(
       comment.id, 
       replyContent, 
-      isLoggedIn ? "Admin" : replyNickname, 
+      isLoggedIn ? (adminUsername || "Admin") : replyNickname, 
       replyPassword
     );
     setIsSubmitting(false);
@@ -309,6 +310,7 @@ export default function CommentSection({ postId, comments: initialComments, prof
               comment={comment}
               replies={getReplies(comment.id)}
               adminAvatarUrl={profile?.avatar_url}
+              adminUsername={profile?.username}
               isLoggedIn={isLoggedIn}
               onSubmitReply={handleSubmitReply}
             />

@@ -4,7 +4,7 @@ import { InputHTMLAttributes, forwardRef, useState, useRef } from "react";
 import Icon from "./Icon";
 
 interface FileUploadProps
-  extends Omit<InputHTMLAttributes<HTMLInputElement>, "type" | "onChange"> {
+  extends Omit<InputHTMLAttributes<HTMLInputElement>, "type" | "onChange" | "onError"> {
   label?: string;
   description?: string;
   accept?: string;

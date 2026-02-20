@@ -1,7 +1,9 @@
 "use client";
 
+import { useState, useEffect, useCallback, startTransition } from "react";
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useSearchParams, useRouter } from "next/navigation";
+import { createClient } from "@/lib/supabase";
 import { Avatar, Stack, Icon } from "@/components/ui";
 import type { Profile } from "@/types";
 
@@ -28,11 +30,45 @@ interface ProfileSidebarProps {
 
 export default function ProfileSidebar({ profile, onNavigate, onClose, showCloseButton }: ProfileSidebarProps) {
   const pathname = usePathname();
+  const searchParams = useSearchParams();
+  const router = useRouter();
+  const [isAdmin, setIsAdmin] = useState(false);
+  const supabase = createClient();
+
+  useEffect(() => {
+    async function checkAuth() {
+      const { data: { user } } = await supabase.auth.getUser();
+      setIsAdmin(!!user);
+    }
+    checkAuth();
+  }, [supabase]);
 
   const isActive = (href: string) => {
-    if (href === "/") return pathname === "/";
-    return pathname.startsWith(href.split("?")[0]);
+    if (href === "/") {
+      return pathname === "/" && !searchParams.get("sort");
+    }
+    if (href.includes("?")) {
+      const [path, query] = href.split("?");
+      if (pathname !== path) return false;
+      const params = new URLSearchParams(query);
+      for (const [key, value] of params.entries()) {
+        if (searchParams.get(key) !== value) return false;
+      }
+      return true;
+    }
+    return pathname === href || pathname.startsWith(href + "/");
   };
+
+  const handleNavClick = useCallback((e: React.MouseEvent<HTMLAnchorElement>, href: string) => {
+    // /life 페이지 내에서 카테고리 전환 시 부드럽게 처리
+    if (pathname === "/life" && href.startsWith("/life?")) {
+      e.preventDefault();
+      onNavigate?.();
+      startTransition(() => {
+        router.replace(href, { scroll: false });
+      });
+    }
+  }, [pathname, router, onNavigate]);
 
   return (
     <aside className="h-screen w-64 bg-white dark:bg-zinc-900 border-r border-zinc-200 dark:border-zinc-800 flex flex-col relative">
@@ -90,7 +126,10 @@ export default function ProfileSidebar({ profile, onNavigate, onClose, showClose
             <Link
               key={item.id}
               href={item.href}
-              onClick={onNavigate}
+              onClick={(e) => {
+                handleNavClick(e, item.href);
+                if (!e.defaultPrevented) onNavigate?.();
+              }}
               className={`
                 flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all
                 ${
@@ -108,6 +147,20 @@ export default function ProfileSidebar({ profile, onNavigate, onClose, showClose
           ))}
         </Stack>
       </div>
+
+      {/* Admin Link */}
+      {isAdmin && (
+        <div className="px-4 pb-2">
+          <Link
+            href="/admin"
+            onClick={onNavigate}
+            className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium bg-zinc-100 dark:bg-zinc-800 text-zinc-700 dark:text-zinc-300 hover:bg-zinc-200 dark:hover:bg-zinc-700 transition-all"
+          >
+            <Icon name="settings" size="sm" className="text-zinc-500" />
+            관리 페이지
+          </Link>
+        </div>
+      )}
 
       {/* Bottom Section */}
       <div className="p-4 border-t border-zinc-200 dark:border-zinc-800">

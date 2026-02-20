@@ -1,78 +1,180 @@
 "use client";
 
-import { useState, useEffect } from "react";
-import { useSearchParams } from "next/navigation";
+import { Suspense, useState, useEffect, useRef, useCallback, startTransition } from "react";
+import { useSearchParams, useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase";
 import { MainLayout, ContentHeader } from "@/components/layout";
 import { PostCard } from "@/components/post";
-import { Stack, Grid, Button, Icon } from "@/components/ui";
+import { Stack, Grid, Icon } from "@/components/ui";
 import type { Post, Profile } from "@/types";
 
-export default function LifePage() {
+const PAGE_SIZE = 9;
+
+function LifePageContent() {
   const searchParams = useSearchParams();
+  const router = useRouter();
   const categoryParam = searchParams.get("category");
-  const [activeCategory, setActiveCategory] = useState<string>("all");
+  const initialCategory = categoryParam === "food" || categoryParam === "drawing" ? categoryParam : "all";
+  const [activeCategory, setActiveCategory] = useState<string>(initialCategory);
   const [profile, setProfile] = useState<Profile | null>(null);
   const [posts, setPosts] = useState<Post[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
+  const [totalCount, setTotalCount] = useState(0);
+  const [isInitialLoading, setIsInitialLoading] = useState(true);
+  const [isLoadingMore, setIsLoadingMore] = useState(false);
+  const [offset, setOffset] = useState(PAGE_SIZE);
+  const loaderRef = useRef<HTMLDivElement>(null);
+  const isFirstMount = useRef(true);
+  
+  const supabase = createClient();
+
+  const handleCategoryChange = useCallback((category: string) => {
+    if (category === activeCategory) return;
+    setActiveCategory(category);
+    startTransition(() => {
+      const url = category === "all" ? "/life" : `/life?category=${category}`;
+      router.replace(url, { scroll: false });
+    });
+  }, [router, activeCategory]);
 
   useEffect(() => {
-    if (categoryParam === "food" || categoryParam === "drawing") {
-      setActiveCategory(categoryParam);
-    } else {
-      setActiveCategory("all");
-    }
-  }, [categoryParam]);
-
-  useEffect(() => {
-    async function loadData() {
-      const supabase = createClient();
-
+    async function loadProfile() {
       const { data: profileData } = await supabase
         .from("profiles")
         .select("*")
         .limit(1)
         .single();
-      
       setProfile(profileData);
+    }
+    loadProfile();
+  }, [supabase]);
 
-      const query = supabase
-        .from("posts")
-        .select("*")
-        .in("category", ["food", "drawing"])
-        .eq("is_published", true)
-        .order("created_at", { ascending: false });
-
-      const { data: postsData } = await query;
-      setPosts(postsData || []);
-      setIsLoading(false);
+  const loadPosts = useCallback(async (category: string, showInitialLoading: boolean) => {
+    if (showInitialLoading) {
+      setIsInitialLoading(true);
     }
 
-    loadData();
-  }, []);
+    let query = supabase
+      .from("posts")
+      .select("*")
+      .in("category", ["food", "drawing"])
+      .eq("is_published", true)
+      .order("created_at", { ascending: false })
+      .limit(PAGE_SIZE);
 
-  const filteredPosts =
-    activeCategory === "all"
-      ? posts
-      : posts.filter((post) => post.category === activeCategory);
+    if (category !== "all") {
+      query = supabase
+        .from("posts")
+        .select("*")
+        .eq("category", category)
+        .eq("is_published", true)
+        .order("created_at", { ascending: false })
+        .limit(PAGE_SIZE);
+    }
 
-  const foodCount = posts.filter((p) => p.category === "food").length;
-  const drawingCount = posts.filter((p) => p.category === "drawing").length;
+    const { data: postsData } = await query;
+    setPosts(postsData || []);
 
-  if (isLoading) {
-    return (
-      <div className="min-h-screen bg-zinc-50 dark:bg-zinc-950 flex items-center justify-center">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600" />
-      </div>
+    let countQuery = supabase
+      .from("posts")
+      .select("*", { count: "exact", head: true })
+      .in("category", ["food", "drawing"])
+      .eq("is_published", true);
+
+    if (category !== "all") {
+      countQuery = supabase
+        .from("posts")
+        .select("*", { count: "exact", head: true })
+        .eq("category", category)
+        .eq("is_published", true);
+    }
+
+    const { count } = await countQuery;
+    setTotalCount(count || 0);
+    setOffset(PAGE_SIZE);
+    setIsInitialLoading(false);
+  }, [supabase]);
+
+  useEffect(() => {
+    if (isFirstMount.current) {
+      isFirstMount.current = false;
+      loadPosts(activeCategory, true);
+    }
+  }, [activeCategory, loadPosts]);
+
+  useEffect(() => {
+    if (!isFirstMount.current) {
+      loadPosts(activeCategory, false);
+    }
+  }, [activeCategory, loadPosts]);
+
+  useEffect(() => {
+    const newCategory = categoryParam === "food" || categoryParam === "drawing" ? categoryParam : "all";
+    if (newCategory !== activeCategory) {
+      setActiveCategory(newCategory);
+    }
+  }, [categoryParam, activeCategory]);
+
+  const hasMore = posts.length < totalCount;
+
+  const loadMore = useCallback(async () => {
+    if (isLoadingMore || !hasMore) return;
+
+    setIsLoadingMore(true);
+
+    let query = supabase
+      .from("posts")
+      .select("*")
+      .in("category", ["food", "drawing"])
+      .eq("is_published", true)
+      .order("created_at", { ascending: false })
+      .range(offset, offset + PAGE_SIZE - 1);
+
+    if (activeCategory !== "all") {
+      query = supabase
+        .from("posts")
+        .select("*")
+        .eq("category", activeCategory)
+        .eq("is_published", true)
+        .order("created_at", { ascending: false })
+        .range(offset, offset + PAGE_SIZE - 1);
+    }
+
+    const { data } = await query;
+
+    if (data && data.length > 0) {
+      setPosts((prev) => {
+        const existingIds = new Set(prev.map(p => p.id));
+        const newPosts = data.filter(p => !existingIds.has(p.id));
+        return [...prev, ...newPosts];
+      });
+      setOffset((prev) => prev + PAGE_SIZE);
+    }
+
+    setIsLoadingMore(false);
+  }, [supabase, offset, activeCategory, isLoadingMore, hasMore]);
+
+  useEffect(() => {
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (entries[0].isIntersecting && hasMore && !isLoadingMore) {
+          loadMore();
+        }
+      },
+      { threshold: 0.1 }
     );
-  }
+
+    if (loaderRef.current) {
+      observer.observe(loaderRef.current);
+    }
+
+    return () => observer.disconnect();
+  }, [loadMore, hasMore, isLoadingMore]);
 
   return (
     <MainLayout profile={profile}>
       <ContentHeader showSearch={true} />
 
       <div className="px-6 lg:px-8 py-8">
-        {/* Hero Section */}
         <div className="mb-8">
           <h1 className="text-3xl md:text-4xl lg:text-5xl font-bold text-zinc-900 dark:text-zinc-100 mb-4">
             Life & Daily
@@ -82,11 +184,10 @@ export default function LifePage() {
           </p>
         </div>
 
-        {/* Category Tabs */}
         <div className="mb-8">
           <Stack direction="row" gap="sm" wrap>
             <button
-              onClick={() => setActiveCategory("all")}
+              onClick={() => handleCategoryChange("all")}
               className={`
                 px-4 py-2 rounded-full text-sm font-medium transition-all
                 ${
@@ -96,10 +197,10 @@ export default function LifePage() {
                 }
               `}
             >
-              All ({posts.length})
+              All ({totalCount})
             </button>
             <button
-              onClick={() => setActiveCategory("food")}
+              onClick={() => handleCategoryChange("food")}
               className={`
                 px-4 py-2 rounded-full text-sm font-medium transition-all
                 ${
@@ -109,10 +210,10 @@ export default function LifePage() {
                 }
               `}
             >
-              <span className="mr-1">🍴</span> Food ({foodCount})
+              <span className="mr-1">🍴</span> Food
             </button>
             <button
-              onClick={() => setActiveCategory("drawing")}
+              onClick={() => handleCategoryChange("drawing")}
               className={`
                 px-4 py-2 rounded-full text-sm font-medium transition-all
                 ${
@@ -122,41 +223,67 @@ export default function LifePage() {
                 }
               `}
             >
-              <span className="mr-1">🎨</span> Drawing ({drawingCount})
+              <span className="mr-1">🎨</span> Drawing
             </button>
           </Stack>
         </div>
 
-        {/* Posts Grid */}
-        <Grid cols={1} colsMd={2} colsLg={3} gap="lg">
-          {filteredPosts.map((post) => (
-            <PostCard key={post.id} post={post} variant="featured" />
-          ))}
-        </Grid>
-
-        {/* Empty State */}
-        {filteredPosts.length === 0 && (
-          <div className="text-center py-16">
-            <Icon name="bookmark" size="xl" className="text-zinc-300 dark:text-zinc-600 mx-auto mb-4" />
-            <p className="text-zinc-500 dark:text-zinc-400">
-              아직 등록된 게시글이 없습니다.
-            </p>
+        {isInitialLoading && posts.length === 0 ? (
+          <div className="flex justify-center items-center py-16">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600" />
           </div>
-        )}
+        ) : (
+          <>
+            <Grid cols={1} colsMd={2} colsLg={3} gap="lg">
+              {posts.map((post) => (
+                <PostCard key={post.id} post={post} variant="featured" />
+              ))}
+            </Grid>
 
-        {/* Load More */}
-        {filteredPosts.length > 6 && (
-          <Stack align="center" className="mt-12">
-            <Button
-              variant="outline"
-              size="lg"
-              rightIcon={<Icon name="arrow-down" size="sm" />}
-            >
-              Load More
-            </Button>
-          </Stack>
+            {posts.length === 0 && (
+              <div className="text-center py-16">
+                <Icon name="bookmark" size="xl" className="text-zinc-300 dark:text-zinc-600 mx-auto mb-4" />
+                <p className="text-zinc-500 dark:text-zinc-400">
+                  아직 등록된 게시글이 없습니다.
+                </p>
+              </div>
+            )}
+
+            {posts.length > 0 && (
+              <div ref={loaderRef} className="flex justify-center items-center py-8 mt-4">
+                {isLoadingMore ? (
+                  <div className="flex items-center gap-2 text-zinc-400">
+                    <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-blue-600" />
+                    <span className="text-sm">불러오는 중...</span>
+                  </div>
+                ) : hasMore ? (
+                  <div className="h-8" />
+                ) : (
+                  <p className="text-zinc-400 dark:text-zinc-500 text-sm">
+                    모든 게시글을 불러왔습니다.
+                  </p>
+                )}
+              </div>
+            )}
+          </>
         )}
       </div>
     </MainLayout>
+  );
+}
+
+function LifePageFallback() {
+  return (
+    <div className="min-h-screen bg-zinc-50 dark:bg-zinc-950 flex items-center justify-center">
+      <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600" />
+    </div>
+  );
+}
+
+export default function LifePage() {
+  return (
+    <Suspense fallback={<LifePageFallback />}>
+      <LifePageContent />
+    </Suspense>
   );
 }

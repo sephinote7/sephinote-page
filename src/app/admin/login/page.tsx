@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { Suspense, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { createClient } from "@/lib/supabase";
@@ -15,7 +15,7 @@ import {
   Alert,
 } from "@/components/ui";
 
-export default function AdminLoginPage() {
+function LoginForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const redirect = searchParams.get("redirect") || "/admin";
@@ -51,6 +51,81 @@ export default function AdminLoginPage() {
   };
 
   return (
+    <Card>
+      <CardContent className="p-6">
+        {error && (
+          <Alert
+            variant="danger"
+            title="로그인 실패"
+            description={error}
+            className="mb-6"
+          />
+        )}
+
+        <form onSubmit={handleSubmit}>
+          <Stack gap="md">
+            <div>
+              <Label htmlFor="email" className="mb-2">
+                Email
+              </Label>
+              <Input
+                id="email"
+                type="email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                placeholder="admin@example.com"
+                leftIcon={<Icon name="chat" size="sm" />}
+                required
+                autoComplete="email"
+              />
+            </div>
+
+            <div>
+              <Label htmlFor="password" className="mb-2">
+                Password
+              </Label>
+              <Input
+                id="password"
+                type="password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                placeholder="••••••••"
+                leftIcon={<Icon name="lock" size="sm" />}
+                required
+                autoComplete="current-password"
+              />
+            </div>
+
+            <Button
+              type="submit"
+              variant="primary"
+              className="w-full mt-2"
+              disabled={isLoading}
+              isLoading={isLoading}
+            >
+              {isLoading ? "Logging in..." : "Login"}
+            </Button>
+          </Stack>
+        </form>
+      </CardContent>
+    </Card>
+  );
+}
+
+function LoginFormFallback() {
+  return (
+    <Card>
+      <CardContent className="p-6">
+        <div className="flex justify-center py-8">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600" />
+        </div>
+      </CardContent>
+    </Card>
+  );
+}
+
+export default function AdminLoginPage() {
+  return (
     <div className="min-h-screen bg-zinc-100 dark:bg-zinc-950 flex items-center justify-center p-4">
       <div className="w-full max-w-md">
         {/* Logo */}
@@ -66,65 +141,10 @@ export default function AdminLoginPage() {
           </p>
         </div>
 
-        {/* Login Card */}
-        <Card>
-          <CardContent className="p-6">
-            {error && (
-              <Alert
-                variant="danger"
-                title="로그인 실패"
-                description={error}
-                className="mb-6"
-              />
-            )}
-
-            <form onSubmit={handleSubmit}>
-              <Stack gap="md">
-                <div>
-                  <Label htmlFor="email" className="mb-2">
-                    Email
-                  </Label>
-                  <Input
-                    id="email"
-                    type="email"
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                    placeholder="admin@example.com"
-                    leftIcon={<Icon name="chat" size="sm" />}
-                    required
-                    autoComplete="email"
-                  />
-                </div>
-
-                <div>
-                  <Label htmlFor="password" className="mb-2">
-                    Password
-                  </Label>
-                  <Input
-                    id="password"
-                    type="password"
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                    placeholder="••••••••"
-                    leftIcon={<Icon name="lock" size="sm" />}
-                    required
-                    autoComplete="current-password"
-                  />
-                </div>
-
-                <Button
-                  type="submit"
-                  variant="primary"
-                  className="w-full mt-2"
-                  disabled={isLoading}
-                  isLoading={isLoading}
-                >
-                  {isLoading ? "Logging in..." : "Login"}
-                </Button>
-              </Stack>
-            </form>
-          </CardContent>
-        </Card>
+        {/* Login Card with Suspense */}
+        <Suspense fallback={<LoginFormFallback />}>
+          <LoginForm />
+        </Suspense>
 
         {/* Back to Home */}
         <div className="text-center mt-6">

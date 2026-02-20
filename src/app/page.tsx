@@ -1,7 +1,6 @@
 import { createServerSupabaseClient } from "@/lib/supabase-server";
 import { MainLayout, ContentHeader } from "@/components/layout";
-import { PostCard } from "@/components/post";
-import { Stack, Grid, Button, Icon } from "@/components/ui";
+import PostGrid from "@/components/post/PostGrid";
 import type { Post, Profile } from "@/types";
 
 interface PageProps {
@@ -36,7 +35,6 @@ async function getLatestPosts(): Promise<Post[]> {
 async function getPopularPosts(): Promise<Post[]> {
   const supabase = await createServerSupabaseClient();
   
-  // 7일 이내 게시물 중 조회수 순으로 정렬
   const sevenDaysAgo = new Date();
   sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
   
@@ -51,10 +49,35 @@ async function getPopularPosts(): Promise<Post[]> {
   return data || [];
 }
 
+async function getTotalCount(sort?: string): Promise<number> {
+  const supabase = await createServerSupabaseClient();
+  
+  if (sort === "popular") {
+    const sevenDaysAgo = new Date();
+    sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
+    
+    const { count } = await supabase
+      .from("posts")
+      .select("*", { count: "exact", head: true })
+      .eq("is_published", true)
+      .gte("created_at", sevenDaysAgo.toISOString());
+    
+    return count || 0;
+  }
+  
+  const { count } = await supabase
+    .from("posts")
+    .select("*", { count: "exact", head: true })
+    .eq("is_published", true);
+  
+  return count || 0;
+}
+
 export default async function HomePage({ searchParams }: PageProps) {
   const { sort } = await searchParams;
   const profile = await getProfile();
-  const posts = sort === "popular" ? await getPopularPosts() : await getLatestPosts();
+  const initialPosts = sort === "popular" ? await getPopularPosts() : await getLatestPosts();
+  const totalCount = await getTotalCount(sort);
 
   return (
     <MainLayout profile={profile}>
@@ -73,35 +96,12 @@ export default async function HomePage({ searchParams }: PageProps) {
           </p>
         </div>
 
-        {/* Posts Grid */}
-        <Grid cols={1} colsMd={2} colsLg={3} gap="lg">
-          {posts.map((post) => (
-            <PostCard key={post.id} post={post} variant="featured" />
-          ))}
-        </Grid>
-
-        {/* Empty State */}
-        {posts.length === 0 && (
-          <div className="text-center py-16">
-            <Icon name="bookmark" size="xl" className="text-zinc-300 dark:text-zinc-600 mx-auto mb-4" />
-            <p className="text-zinc-500 dark:text-zinc-400">
-              아직 등록된 게시글이 없습니다.
-            </p>
-          </div>
-        )}
-
-        {/* Load More */}
-        {posts.length > 0 && (
-          <Stack align="center" className="mt-12">
-            <Button
-              variant="outline"
-              size="lg"
-              rightIcon={<Icon name="arrow-down" size="sm" />}
-            >
-              Load More Entries
-            </Button>
-          </Stack>
-        )}
+        {/* Posts Grid with Load More */}
+        <PostGrid 
+          initialPosts={initialPosts} 
+          totalCount={totalCount}
+          sortBy={sort}
+        />
       </div>
     </MainLayout>
   );

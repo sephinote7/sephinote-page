@@ -1,7 +1,7 @@
 import { createServerSupabaseClient } from "@/lib/supabase-server";
 import { MainLayout, ContentHeader } from "@/components/layout";
-import { PostCard } from "@/components/post";
-import { Stack, Grid, Button, Icon, Badge } from "@/components/ui";
+import { PostCard, PostGrid } from "@/components/post";
+import { Stack, Badge } from "@/components/ui";
 import type { Post, Profile } from "@/types";
 
 async function getProfile(): Promise<Profile | null> {
@@ -24,9 +24,22 @@ async function getPortfolioPosts(): Promise<Post[]> {
     .select("*")
     .eq("category", "portfolio")
     .eq("is_published", true)
-    .order("created_at", { ascending: false });
+    .order("created_at", { ascending: false })
+    .limit(9);
   
   return data || [];
+}
+
+async function getTotalCount(): Promise<number> {
+  const supabase = await createServerSupabaseClient();
+  
+  const { count } = await supabase
+    .from("posts")
+    .select("*", { count: "exact", head: true })
+    .eq("category", "portfolio")
+    .eq("is_published", true);
+  
+  return count || 0;
 }
 
 const techStack = [
@@ -36,6 +49,7 @@ const techStack = [
 export default async function WorksPage() {
   const profile = await getProfile();
   const posts = await getPortfolioPosts();
+  const totalCount = await getTotalCount();
 
   return (
     <MainLayout profile={profile}>
@@ -48,7 +62,7 @@ export default async function WorksPage() {
             <h1 className="text-3xl md:text-4xl lg:text-5xl font-bold text-zinc-900 dark:text-zinc-100">
               Works & Projects
             </h1>
-            <Badge variant="primary" size="lg">{posts.length}</Badge>
+            <Badge variant="primary" size="lg">{totalCount}</Badge>
           </Stack>
           <p className="text-lg text-zinc-500 dark:text-zinc-400 max-w-xl mb-6">
             Selected projects showcasing my approach to design and development.
@@ -75,41 +89,18 @@ export default async function WorksPage() {
           </div>
         )}
 
-        {/* All Projects */}
-        {posts.length > 1 && (
+        {/* All Projects with Infinite Scroll */}
+        {totalCount > 1 && (
           <div>
             <h2 className="text-xs font-semibold text-zinc-400 dark:text-zinc-500 uppercase tracking-wider mb-4">
               All Projects
             </h2>
-            <Grid cols={1} colsMd={2} colsLg={3} gap="lg">
-              {posts.slice(1).map((post) => (
-                <PostCard key={post.id} post={post} variant="featured" />
-              ))}
-            </Grid>
+            <PostGrid 
+              initialPosts={posts.slice(1)} 
+              totalCount={totalCount - 1}
+              category="portfolio"
+            />
           </div>
-        )}
-
-        {/* Empty State */}
-        {posts.length === 0 && (
-          <div className="text-center py-16">
-            <Icon name="bookmark" size="xl" className="text-zinc-300 dark:text-zinc-600 mx-auto mb-4" />
-            <p className="text-zinc-500 dark:text-zinc-400">
-              아직 등록된 프로젝트가 없습니다.
-            </p>
-          </div>
-        )}
-
-        {/* Load More */}
-        {posts.length > 6 && (
-          <Stack align="center" className="mt-12">
-            <Button
-              variant="outline"
-              size="lg"
-              rightIcon={<Icon name="arrow-down" size="sm" />}
-            >
-              Load More Projects
-            </Button>
-          </Stack>
         )}
       </div>
     </MainLayout>

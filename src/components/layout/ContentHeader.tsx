@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useCallback } from "react";
+import { useState, useCallback, startTransition } from "react";
 import Link from "next/link";
 import { usePathname, useSearchParams, useRouter } from "next/navigation";
 import { Stack, Input, Icon } from "@/components/ui";
@@ -36,16 +36,25 @@ export default function ContentHeader({ showTabs = true, showSearch = true }: Co
     }
     if (tab.href.includes("?")) {
       const [path, query] = tab.href.split("?");
+      if (pathname !== path) return false;
       const params = new URLSearchParams(query);
-      if (pathname === path || pathname.startsWith(path)) {
-        for (const [key, value] of params.entries()) {
-          if (searchParams.get(key) === value) return true;
-        }
+      for (const [key, value] of params.entries()) {
+        if (searchParams.get(key) !== value) return false;
       }
-      return false;
+      return true;
     }
-    return pathname === tab.href || pathname.startsWith(tab.href);
+    return pathname === tab.href || pathname.startsWith(tab.href + "/");
   };
+
+  const handleTabClick = useCallback((e: React.MouseEvent<HTMLAnchorElement>, href: string) => {
+    // /life 페이지 내에서 카테고리 전환 시 부드럽게 처리
+    if (pathname === "/life" && href.startsWith("/life?")) {
+      e.preventDefault();
+      startTransition(() => {
+        router.replace(href, { scroll: false });
+      });
+    }
+  }, [pathname, router]);
 
   const handleSearch = useCallback((e: React.FormEvent) => {
     e.preventDefault();
@@ -72,6 +81,7 @@ export default function ContentHeader({ showTabs = true, showSearch = true }: Co
                 <Link
                   key={tab.id}
                   href={tab.href}
+                  onClick={(e) => handleTabClick(e, tab.href)}
                   className={`
                     px-3 py-1.5 rounded-md text-sm font-medium whitespace-nowrap transition-colors
                     ${

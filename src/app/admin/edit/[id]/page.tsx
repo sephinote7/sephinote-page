@@ -40,6 +40,8 @@ function getPost(id: string): Post | null {
       image_urls: [],
       thumbnail_urls: [],
       author_id: "demo-user",
+      view_count: 0,
+      is_published: true,
     },
     "f1": {
       id: "f1",
@@ -53,6 +55,8 @@ function getPost(id: string): Post | null {
       location_name: "서촌 카페",
       lat: 37.5796,
       lng: 126.9705,
+      view_count: 0,
+      is_published: true,
     },
   };
   return posts[id] || null;

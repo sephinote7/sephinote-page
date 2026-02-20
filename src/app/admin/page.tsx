@@ -99,22 +99,22 @@ export default async function AdminDashboardPage() {
         {/* Stats Grid */}
         <Grid cols={2} colsMd={3} colsLg={4} gap="md" className="mb-8">
           <StatCard
-            title="Total Posts"
+            label="Total Posts"
             value={stats.totalPosts}
             icon={<Icon name="bookmark" size="md" />}
           />
           <StatCard
-            title="Total Comments"
+            label="Total Comments"
             value={stats.totalComments}
             icon={<Icon name="chat" size="md" />}
           />
           <StatCard
-            title="Portfolio"
+            label="Portfolio"
             value={stats.portfolioPosts}
             icon={<Icon name="bookmark" size="md" />}
           />
           <StatCard
-            title="Categories"
+            label="Categories"
             value="3"
             icon={<Icon name="menu" size="md" />}
           />

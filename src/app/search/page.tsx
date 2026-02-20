@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useCallback } from "react";
+import { Suspense, useEffect, useState, useCallback } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase";
 import { MainLayout, ContentHeader } from "@/components/layout";
@@ -8,7 +8,7 @@ import { PostCard } from "@/components/post";
 import { Stack, Grid, Icon, Input, Button } from "@/components/ui";
 import type { Post, Profile } from "@/types";
 
-export default function SearchPage() {
+function SearchPageContent() {
   const searchParams = useSearchParams();
   const router = useRouter();
   const query = searchParams.get("q") || "";
@@ -144,5 +144,21 @@ export default function SearchPage() {
         </Stack>
       </div>
     </MainLayout>
+  );
+}
+
+function SearchPageFallback() {
+  return (
+    <div className="min-h-screen bg-zinc-50 dark:bg-zinc-950 flex items-center justify-center">
+      <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600" />
+    </div>
+  );
+}
+
+export default function SearchPage() {
+  return (
+    <Suspense fallback={<SearchPageFallback />}>
+      <SearchPageContent />
+    </Suspense>
   );
 }
