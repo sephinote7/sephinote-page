@@ -3,3 +3,4 @@ export { default as PostGrid } from "./PostGrid";
 export { default as QuoteCard } from "./QuoteCard";
 export { default as CommentSection } from "./CommentSection";
 export { default as KakaoMap } from "./KakaoMap";
+export { default as PostAdminActions } from "./PostAdminActions";

@@ -2,7 +2,7 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { createServerSupabaseClient } from "@/lib/supabase-server";
 import { AdminLayout } from "@/components/layout";
-import { StatCard, Card, CardContent, Stack, Grid, Badge, Button, Icon, Avatar } from "@/components/ui";
+import { StatCard, Card, CardContent, Stack, Grid, Badge, Button, Icon } from "@/components/ui";
 import type { Profile, Post, Comment } from "@/types";
 
 async function getProfileAndStats() {
@@ -21,30 +21,36 @@ async function getProfileAndStats() {
 
   const { count: totalPosts } = await supabase
     .from("posts")
-    .select("*", { count: "exact", head: true });
+    .select("*", { count: "exact", head: true })
+    .eq("del_yn", "N");
 
   const { count: portfolioCount } = await supabase
     .from("posts")
     .select("*", { count: "exact", head: true })
-    .eq("category", "portfolio");
+    .eq("category", "portfolio")
+    .eq("del_yn", "N");
 
   const { count: foodCount } = await supabase
     .from("posts")
     .select("*", { count: "exact", head: true })
-    .eq("category", "food");
+    .eq("category", "food")
+    .eq("del_yn", "N");
 
   const { count: drawingCount } = await supabase
     .from("posts")
     .select("*", { count: "exact", head: true })
-    .eq("category", "drawing");
+    .eq("category", "drawing")
+    .eq("del_yn", "N");
 
   const { count: totalComments } = await supabase
     .from("comments")
-    .select("*", { count: "exact", head: true });
+    .select("*", { count: "exact", head: true })
+    .eq("del_yn", "N");
 
   const { data: recentPosts } = await supabase
     .from("posts")
     .select("*")
+    .eq("del_yn", "N")
     .order("created_at", { ascending: false })
     .limit(5);
 
@@ -54,6 +60,7 @@ async function getProfileAndStats() {
       *,
       posts:post_id (title)
     `)
+    .eq("del_yn", "N")
     .order("created_at", { ascending: false })
     .limit(5);
 
@@ -72,6 +79,15 @@ async function getProfileAndStats() {
       postTitle: c.posts?.title || "Unknown Post"
     })) || [],
   };
+}
+
+function getInitialFromNickname(nickname: string): string {
+  if (!nickname) return "?";
+  const trimmed = nickname.trim();
+  if (!trimmed) return "?";
+  const firstChar = trimmed.charAt(0);
+  // 한글은 그대로, 영문/숫자는 대문자로
+  return /[a-zA-Z]/.test(firstChar) ? firstChar.toUpperCase() : firstChar;
 }
 
 const categoryColors: Record<Post["category"], "primary" | "success" | "secondary"> = {
@@ -158,11 +174,23 @@ export default async function AdminDashboardPage() {
                 <h2 className="text-lg font-semibold text-zinc-900 dark:text-zinc-100">
                   Recent Posts
                 </h2>
-                <Link href="/admin/write">
-                  <Button variant="primary" size="sm" leftIcon={<Icon name="plus" size="sm" />}>
-                    New Post
-                  </Button>
-                </Link>
+                <Stack direction="row" gap="sm">
+                  <Link href="/admin/trash/posts">
+                    <Button variant="ghost" size="sm">
+                      삭제된 게시글
+                    </Button>
+                  </Link>
+                  <Link href="/admin/posts">
+                    <Button variant="outline" size="sm">
+                      전체 보기
+                    </Button>
+                  </Link>
+                  <Link href="/admin/write">
+                    <Button variant="primary" size="sm" leftIcon={<Icon name="plus" size="sm" />}>
+                      New Post
+                    </Button>
+                  </Link>
+                </Stack>
               </Stack>
               <div className="space-y-4">
                 {recentPosts?.map((post) => (
@@ -186,7 +214,7 @@ export default async function AdminDashboardPage() {
                         </span>
                       </Stack>
                     </div>
-                    <Link href={`/admin/edit/${post.id}`}>
+                    <Link href={`/posts/${post.id}`}>
                       <Button variant="ghost" size="icon">
                         <Icon name="arrow-right" size="sm" />
                       </Button>
@@ -203,26 +231,49 @@ export default async function AdminDashboardPage() {
           {/* Recent Comments */}
           <Card>
             <CardContent>
-              <h2 className="text-lg font-semibold text-zinc-900 dark:text-zinc-100 mb-4">
-                Recent Comments
-              </h2>
+              <Stack direction="row" justify="between" align="center" className="mb-4">
+                <h2 className="text-lg font-semibold text-zinc-900 dark:text-zinc-100">
+                  Recent Comments
+                </h2>
+                <Stack direction="row" gap="sm">
+                  <Link href="/admin/trash/comments">
+                    <Button variant="ghost" size="sm">
+                      삭제된 댓글
+                    </Button>
+                  </Link>
+                  <Link href="/admin/comments">
+                    <Button variant="outline" size="sm">
+                      전체 보기
+                    </Button>
+                  </Link>
+                </Stack>
+              </Stack>
               <div className="space-y-4">
                 {recentComments?.map((comment: Comment & { postTitle: string }) => (
                   <div
                     key={comment.id}
                     className="p-3 rounded-lg bg-zinc-50 dark:bg-zinc-800/50"
                   >
-                    <Stack direction="row" gap="sm" align="center" className="mb-2">
-                      <Avatar className="w-8 h-8" />
-                      <span className="font-medium text-sm text-zinc-900 dark:text-zinc-100">
-                        {comment.nickname}
-                      </span>
-                      {comment.is_admin && (
-                        <Badge variant="primary" size="sm">Admin</Badge>
-                      )}
-                      <span className="text-xs text-zinc-500">
-                        {new Date(comment.created_at).toLocaleDateString("ko-KR")}
-                      </span>
+                    <Stack direction="row" gap="sm" align="center" className="mb-2 justify-between">
+                      <Stack direction="row" gap="sm" align="center">
+                        <div className="w-8 h-8 rounded-full bg-blue-100 dark:bg-blue-900/30 flex items-center justify-center text-xs font-medium text-blue-600 dark:text-blue-400">
+                          {getInitialFromNickname(comment.nickname)}
+                        </div>
+                        <span className="font-medium text-sm text-zinc-900 dark:text-zinc-100">
+                          {comment.nickname}
+                        </span>
+                        {comment.is_admin && (
+                          <Badge variant="primary" size="sm">Admin</Badge>
+                        )}
+                        <span className="text-xs text-zinc-500">
+                          {new Date(comment.created_at).toLocaleDateString("ko-KR")}
+                        </span>
+                      </Stack>
+                      <Link href={`/posts/${comment.post_id}#comment-${comment.id}`}>
+                        <Button variant="ghost" size="icon">
+                          <Icon name="arrow-right" size="sm" />
+                        </Button>
+                      </Link>
                     </Stack>
                     <p className="text-sm text-zinc-600 dark:text-zinc-400 mb-2 line-clamp-2">
                       {comment.content}

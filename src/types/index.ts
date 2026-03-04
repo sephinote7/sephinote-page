@@ -12,6 +12,7 @@ export interface Post {
   author_id: string;
   view_count: number;
   is_published: boolean;
+  del_yn?: "N" | "Y";
 }
 
 export interface Profile {
@@ -30,6 +31,7 @@ export interface Comment {
   password?: string;
   is_admin: boolean;
   created_at: string;
+  del_yn?: "N" | "Y";
 }
 
 export type CategoryType = "all" | "portfolio" | "food" | "drawing";

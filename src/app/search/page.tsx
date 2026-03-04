@@ -39,6 +39,7 @@ function SearchPageContent() {
           .from("posts")
           .select("*")
           .eq("is_published", true)
+          .eq("del_yn", "N")
           .or(`title.ilike.%${query}%,content.ilike.%${query}%`)
           .order("created_at", { ascending: false });
 

@@ -58,6 +58,7 @@ function LifePageContent() {
       .select("*")
       .in("category", ["food", "drawing"])
       .eq("is_published", true)
+      .eq("del_yn", "N")
       .order("created_at", { ascending: false })
       .limit(PAGE_SIZE);
 
@@ -67,6 +68,7 @@ function LifePageContent() {
         .select("*")
         .eq("category", category)
         .eq("is_published", true)
+        .eq("del_yn", "N")
         .order("created_at", { ascending: false })
         .limit(PAGE_SIZE);
     }
@@ -78,14 +80,16 @@ function LifePageContent() {
       .from("posts")
       .select("*", { count: "exact", head: true })
       .in("category", ["food", "drawing"])
-      .eq("is_published", true);
+      .eq("is_published", true)
+      .eq("del_yn", "N");
 
     if (category !== "all") {
       countQuery = supabase
         .from("posts")
         .select("*", { count: "exact", head: true })
         .eq("category", category)
-        .eq("is_published", true);
+        .eq("is_published", true)
+        .eq("del_yn", "N");
     }
 
     const { count } = await countQuery;
@@ -126,6 +130,7 @@ function LifePageContent() {
       .select("*")
       .in("category", ["food", "drawing"])
       .eq("is_published", true)
+      .eq("del_yn", "N")
       .order("created_at", { ascending: false })
       .range(offset, offset + PAGE_SIZE - 1);
 
@@ -135,6 +140,7 @@ function LifePageContent() {
         .select("*")
         .eq("category", activeCategory)
         .eq("is_published", true)
+        .eq("del_yn", "N")
         .order("created_at", { ascending: false })
         .range(offset, offset + PAGE_SIZE - 1);
     }

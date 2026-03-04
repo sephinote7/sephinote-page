@@ -24,6 +24,7 @@ async function getPortfolioPosts(): Promise<Post[]> {
     .select("*")
     .eq("category", "portfolio")
     .eq("is_published", true)
+    .eq("del_yn", "N")
     .order("created_at", { ascending: false })
     .limit(9);
   
@@ -37,7 +38,8 @@ async function getTotalCount(): Promise<number> {
     .from("posts")
     .select("*", { count: "exact", head: true })
     .eq("category", "portfolio")
-    .eq("is_published", true);
+    .eq("is_published", true)
+    .eq("del_yn", "N");
   
   return count || 0;
 }

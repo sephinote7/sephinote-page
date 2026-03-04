@@ -32,7 +32,8 @@ export default function PostGrid({ initialPosts, totalCount, sortBy, category }:
     let query = supabase
       .from("posts")
       .select("*")
-      .eq("is_published", true);
+      .eq("is_published", true)
+      .eq("del_yn", "N");
 
     if (category) {
       query = query.eq("category", category);
