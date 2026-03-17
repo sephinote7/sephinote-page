@@ -1,11 +1,12 @@
-'use client';
+"use client";
 
-import { useState, useEffect, useCallback, startTransition } from 'react';
-import Link from 'next/link';
-import { usePathname, useSearchParams, useRouter } from 'next/navigation';
-import { createClient } from '@/lib/supabase';
-import { Avatar, Stack, Icon } from '@/components/ui';
-import type { Profile } from '@/types';
+import { useState, useEffect, useCallback, startTransition } from "react";
+import Link from "next/link";
+import Image from "next/image";
+import { usePathname, useSearchParams, useRouter } from "next/navigation";
+import { createClient } from "@/lib/supabase";
+import { Avatar, Stack, Icon } from "@/components/ui";
+import type { Profile } from "@/types";
 
 interface MenuItem {
   id: string;
@@ -75,29 +76,29 @@ export default function ProfileSidebar({
 
   // 테마 초기화
   useEffect(() => {
-    if (typeof window === 'undefined') return;
-    const stored = window.localStorage.getItem('theme');
-    const initialTheme = stored === 'dark' ? 'dark' : 'light';
+    if (typeof window === "undefined") return;
+    const stored = window.localStorage.getItem("theme");
+    const initialTheme = stored === "dark" ? "dark" : "light";
     setTheme(initialTheme);
-    document.documentElement.classList.toggle('dark', initialTheme === 'dark');
+    document.documentElement.classList.toggle("dark", initialTheme === "dark");
   }, []);
 
   const toggleTheme = () => {
-    const next = theme === 'light' ? 'dark' : 'light';
+    const next = theme === "light" ? "dark" : "light";
     setTheme(next);
-    if (typeof window !== 'undefined') {
-      document.documentElement.classList.toggle('dark', next === 'dark');
-      window.localStorage.setItem('theme', next);
+    if (typeof window !== "undefined") {
+      document.documentElement.classList.toggle("dark", next === "dark");
+      window.localStorage.setItem("theme", next);
     }
   };
 
   const handleCopyEmail = async () => {
-    const email = 'sephinote@gmail.com';
+    const email = "sephinote@gmail.com";
     try {
       await navigator.clipboard.writeText(email);
-      alert('메일 주소가 복사되었습니다.');
+      alert("메일 주소가 복사되었습니다.");
     } catch {
-      alert('복사에 실패했습니다. 수동으로 복사해주세요.');
+      alert("복사에 실패했습니다. 수동으로 복사해주세요.");
     }
   };
 
@@ -158,7 +159,7 @@ export default function ProfileSidebar({
           {profile?.username || 'Portfolio'}
         </h2>
         <p className="text-sm text-zinc-500 dark:text-zinc-400 line-clamp-2">
-          {profile?.bio || 'Digital Creator & Developer'}
+          {profile?.bio || "Digital Creator & Developer"}
         </p>
 
         <p className="mt-4 text-xs font-semibold text-zinc-400 dark:text-zinc-500 uppercase tracking-wider">
@@ -172,10 +173,23 @@ export default function ProfileSidebar({
             href="https://github.com/sephinote7?tab=repositories"
             target="_blank"
             rel="noopener noreferrer"
-            className="w-9 h-9 rounded-full bg-black text-white flex items-center justify-center hover:bg-zinc-800 transition-colors"
+            className="w-9 h-9 rounded-full flex items-center justify-center overflow-hidden bg-zinc-900"
             aria-label="GitHub"
           >
-            <span className="text-xs font-bold">GH</span>
+            <Image
+              src="/img/github_white.png"
+              alt="GitHub"
+              width={24}
+              height={24}
+              className="hidden dark:block"
+            />
+            <Image
+              src="/img/github_black.png"
+              alt="GitHub"
+              width={24}
+              height={24}
+              className="block dark:hidden"
+            />
           </a>
           {/* Email modal */}
           <button
@@ -191,7 +205,12 @@ export default function ProfileSidebar({
             className="w-9 h-9 rounded-full bg-zinc-100 dark:bg-zinc-800 flex items-center justify-center text-zinc-600 dark:text-zinc-200 hover:bg-zinc-200 dark:hover:bg-zinc-700 transition-colors"
             aria-label="Toggle dark mode"
           >
-            <Icon name="settings" size="sm" />
+            <Image
+              src="/img/darkmode_icon.png"
+              alt="Dark mode"
+              width={20}
+              height={20}
+            />
           </button>
         </Stack>
       </div>
@@ -204,6 +223,25 @@ export default function ProfileSidebar({
           Curated Boards
         </p>
         <Stack gap="xs">
+          {/* Home */}
+          <Link
+            href="/"
+            onClick={onNavigate}
+            className={`
+              flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all
+              ${
+                isActive('/')
+                  ? 'bg-zinc-900 text-white shadow-md'
+                  : 'text-zinc-600 dark:text-zinc-400 hover:bg-zinc-100 dark:hover:bg-zinc-800'
+              }
+            `}
+          >
+            <span className={isActive('/') ? 'text-white' : 'text-zinc-400'}>
+              <Icon name="bookmark" size="sm" />
+            </span>
+            Home
+          </Link>
+
           {/* All Boards (토글 + 링크) */}
           <button
             onClick={() => {
@@ -226,9 +264,7 @@ export default function ProfileSidebar({
               </span>
               All Boards
             </span>
-            <span className="text-xs">
-              {boardsExpanded ? '−' : '+'}
-            </span>
+            <span className="text-xs">{boardsExpanded ? '−' : '+'}</span>
           </button>
 
           {/* Child boards */}

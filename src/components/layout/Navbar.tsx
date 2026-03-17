@@ -6,6 +6,7 @@ import { useState } from "react";
 import { Container, Stack, Button, Icon, Avatar } from "@/components/ui";
 
 const navItems = [
+  { href: "/", label: "Home" },
   { href: "/", label: "Latest Posts" },
   { href: "/?sort=popular", label: "Popular" },
   { href: "/life", label: "Board" },
@@ -45,8 +46,14 @@ export default function Navbar({ profile }: NavbarProps) {
             {navItems.map((item) => {
               const isPopular = searchParams.get("sort") === "popular";
               const isActive =
-                (item.href === "/" && pathname === "/" && !isPopular) ||
-                (item.href === "/?sort=popular" && pathname === "/" && isPopular) ||
+                (item.label !== "Popular" &&
+                  item.href === "/" &&
+                  pathname === "/" &&
+                  !isPopular) ||
+                (item.label === "Popular" &&
+                  item.href === "/?sort=popular" &&
+                  pathname === "/" &&
+                  isPopular) ||
                 (item.href === "/life" && pathname.startsWith("/life"));
               return (
                 <Link
