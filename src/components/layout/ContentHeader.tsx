@@ -11,9 +11,10 @@ interface Tab {
   href: string;
 }
 
-// 상단 탭: Latest Posts / Popular / Board
+// 상단 탭: Home / Latest Posts / Popular / Board
 const tabs: Tab[] = [
-  { id: "latest", label: "Latest Posts", href: "/" },
+  { id: "home", label: "Home", href: "/" },
+  { id: "latest", label: "Latest Posts", href: "/?tab=latest" },
   { id: "popular", label: "Popular", href: "/?sort=popular" },
   { id: "board", label: "Board", href: "/life" },
 ];
@@ -30,8 +31,16 @@ export default function ContentHeader({ showTabs = true, showSearch = true }: Co
   const [searchQuery, setSearchQuery] = useState(searchParams.get("q") || "");
 
   const isActive = (tab: Tab) => {
-    if (tab.href === "/") {
-      return pathname === "/" && !searchParams.get("sort") && !searchParams.get("q");
+    if (tab.id === "home") {
+      return (
+        pathname === "/" &&
+        !searchParams.get("sort") &&
+        !searchParams.get("q") &&
+        !searchParams.get("tab")
+      );
+    }
+    if (tab.id === "latest") {
+      return pathname === "/" && searchParams.get("tab") === "latest";
     }
     if (tab.href.includes("?")) {
       const [path, query] = tab.href.split("?");

@@ -3,10 +3,14 @@
 import { useState, useEffect, useCallback, startTransition } from "react";
 import Link from "next/link";
 import Image from "next/image";
+import { createPortal } from "react-dom";
 import { usePathname, useSearchParams, useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase";
 import { Avatar, Stack, Icon } from "@/components/ui";
 import type { Profile } from "@/types";
+import githubBlackPng from "@/img/github_black.png";
+import githubWhitePng from "@/img/github_white.png";
+import darkmodeIconPng from "@/img/darkmode_icon.png";
 
 interface MenuItem {
   id: string;
@@ -62,6 +66,7 @@ export default function ProfileSidebar({
   const [boardsExpanded, setBoardsExpanded] = useState(false);
   const [showEmailModal, setShowEmailModal] = useState(false);
   const [theme, setTheme] = useState<"light" | "dark">("light");
+  const [hasMounted, setHasMounted] = useState(false);
   const supabase = createClient();
 
   useEffect(() => {
@@ -81,6 +86,10 @@ export default function ProfileSidebar({
     const initialTheme = stored === "dark" ? "dark" : "light";
     setTheme(initialTheme);
     document.documentElement.classList.toggle("dark", initialTheme === "dark");
+  }, []);
+
+  useEffect(() => {
+    setHasMounted(true);
   }, []);
 
   const toggleTheme = () => {
@@ -173,22 +182,14 @@ export default function ProfileSidebar({
             href="https://github.com/sephinote7?tab=repositories"
             target="_blank"
             rel="noopener noreferrer"
-            className="w-9 h-9 rounded-full flex items-center justify-center overflow-hidden bg-zinc-900"
+            className="w-9 h-9 rounded-full bg-zinc-100 dark:bg-zinc-800 flex items-center justify-center hover:bg-zinc-200 dark:hover:bg-zinc-700 transition-colors"
             aria-label="GitHub"
           >
             <Image
-              src="/img/github_white.png"
+              src={theme === "dark" ? githubWhitePng : githubBlackPng}
               alt="GitHub"
-              width={24}
-              height={24}
-              className="hidden dark:block"
-            />
-            <Image
-              src="/img/github_black.png"
-              alt="GitHub"
-              width={24}
-              height={24}
-              className="block dark:hidden"
+              width={18}
+              height={18}
             />
           </a>
           {/* Email modal */}
@@ -202,15 +203,10 @@ export default function ProfileSidebar({
           {/* Dark mode toggle */}
           <button
             onClick={toggleTheme}
-            className="w-9 h-9 rounded-full bg-zinc-100 dark:bg-zinc-800 flex items-center justify-center text-zinc-600 dark:text-zinc-200 hover:bg-zinc-200 dark:hover:bg-zinc-700 transition-colors"
+            className="w-9 h-9 rounded-full bg-zinc-100 dark:bg-zinc-800 flex items-center justify-center hover:bg-zinc-200 dark:hover:bg-zinc-700 transition-colors"
             aria-label="Toggle dark mode"
           >
-            <Image
-              src="/img/darkmode_icon.png"
-              alt="Dark mode"
-              width={20}
-              height={20}
-            />
+            <Image src={darkmodeIconPng} alt="Dark mode" width={18} height={18} />
           </button>
         </Stack>
       </div>
@@ -227,16 +223,9 @@ export default function ProfileSidebar({
           <Link
             href="/"
             onClick={onNavigate}
-            className={`
-              flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all
-              ${
-                isActive('/')
-                  ? 'bg-zinc-900 text-white shadow-md'
-                  : 'text-zinc-600 dark:text-zinc-400 hover:bg-zinc-100 dark:hover:bg-zinc-800'
-              }
-            `}
+            className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all text-zinc-600 dark:text-zinc-400 hover:bg-zinc-100 dark:hover:bg-zinc-800"
           >
-            <span className={isActive('/') ? 'text-white' : 'text-zinc-400'}>
+            <span className="text-zinc-400">
               <Icon name="bookmark" size="sm" />
             </span>
             Home
@@ -249,17 +238,10 @@ export default function ProfileSidebar({
               onNavigate?.();
               router.push('/');
             }}
-            className={`
-              flex items-center justify-between px-3 py-2.5 rounded-lg text-sm font-medium transition-all
-              ${
-                isActive('/')
-                  ? 'bg-blue-600 text-white shadow-md'
-                  : 'text-zinc-600 dark:text-zinc-400 hover:bg-zinc-100 dark:hover:bg-zinc-800'
-              }
-            `}
+            className="flex items-center justify-between px-3 py-2.5 rounded-lg text-sm font-medium transition-all text-zinc-600 dark:text-zinc-400 hover:bg-zinc-100 dark:hover:bg-zinc-800"
           >
             <span className="flex items-center gap-3">
-              <span className={isActive('/') ? 'text-white' : 'text-zinc-400'}>
+              <span className="text-zinc-400">
                 <Icon name="menu" size="sm" />
               </span>
               All Boards
@@ -302,44 +284,50 @@ export default function ProfileSidebar({
         </Stack>
       </div>
 
-      {/* Email Modal */}
-      {showEmailModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
-          <div className="bg-white dark:bg-zinc-900 rounded-xl shadow-xl p-6 w-80">
-            <h3 className="text-lg font-semibold text-zinc-900 dark:text-zinc-100 mb-2">
-              Contact Me
-            </h3>
-            <p className="text-sm text-zinc-600 dark:text-zinc-300 mb-4">
-              아래 메일 주소로 연락 주세요.
-            </p>
-            <div className="mb-4">
-              <code className="block w-full px-3 py-2 rounded-md bg-zinc-100 dark:bg-zinc-800 text-xs text-zinc-800 dark:text-zinc-100">
-                sephinote@gmail.com
-              </code>
+      {/* Email Modal (Portal: transform 영향 제거) */}
+      {hasMounted &&
+        showEmailModal &&
+        createPortal(
+          <div
+            className="fixed inset-0 w-screen h-screen z-[9999] flex items-center justify-center bg-black/40"
+            style={{ zIndex: 9999 }}
+          >
+            <div className="bg-white dark:bg-zinc-900 rounded-xl shadow-xl p-6 w-80">
+              <h3 className="text-lg font-semibold text-zinc-900 dark:text-zinc-100 mb-2">
+                Contact Me
+              </h3>
+              <p className="text-sm text-zinc-600 dark:text-zinc-300 mb-4">
+                아래 메일 주소로 연락 주세요.
+              </p>
+              <div className="mb-4">
+                <code className="block w-full px-3 py-2 rounded-md bg-zinc-100 dark:bg-zinc-800 text-xs text-zinc-800 dark:text-zinc-100">
+                  sephinote@gmail.com
+                </code>
+              </div>
+              <div className="flex items-center justify-end gap-2">
+                <button
+                  onClick={handleCopyEmail}
+                  className="px-3 py-1.5 rounded-md text-xs font-medium bg-zinc-100 dark:bg-zinc-800 text-zinc-700 dark:text-zinc-200 hover:bg-zinc-200 dark:hover:bg-zinc-700 transition-colors"
+                >
+                  주소 복사
+                </button>
+                <a
+                  href="mailto:sephinote@gmail.com"
+                  className="px-3 py-1.5 rounded-md text-xs font-medium bg-blue-600 text-white hover:bg-blue-700 transition-colors"
+                >
+                  메일 보내기
+                </a>
+                <button
+                  onClick={() => setShowEmailModal(false)}
+                  className="px-3 py-1.5 rounded-md text-xs font-medium bg-zinc-100 dark:bg-zinc-800 text-zinc-700 dark:text-zinc-200 hover:bg-zinc-200 dark:hover:bg-zinc-700 transition-colors"
+                >
+                  확인
+                </button>
+              </div>
             </div>
-            <Stack direction="row" gap="sm" justify="end">
-              <button
-                onClick={handleCopyEmail}
-                className="px-3 py-1.5 rounded-md text-xs font-medium bg-zinc-100 dark:bg-zinc-800 text-zinc-700 dark:text-zinc-200 hover:bg-zinc-200 dark:hover:bg-zinc-700 transition-colors"
-              >
-                주소 복사
-              </button>
-              <a
-                href="mailto:sephinote@gmail.com"
-                className="px-3 py-1.5 rounded-md text-xs font-medium bg-blue-600 text-white hover:bg-blue-700 transition-colors"
-              >
-                메일 보내기
-              </a>
-              <button
-                onClick={() => setShowEmailModal(false)}
-                className="px-3 py-1.5 rounded-md text-xs font-medium bg-zinc-100 dark:bg-zinc-800 text-zinc-700 dark:text-zinc-200 hover:bg-zinc-200 dark:hover:bg-zinc-700 transition-colors"
-              >
-                확인
-              </button>
-            </Stack>
-          </div>
-        </div>
-      )}
+          </div>,
+          document.body,
+        )}
 
       {/* Admin Link */}
       {isAdmin && (

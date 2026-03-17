@@ -4,7 +4,7 @@ import PostGrid from '@/components/post/PostGrid';
 import type { Post, Profile } from '@/types';
 
 interface PageProps {
-  searchParams: Promise<{ sort?: string }>;
+  searchParams: Promise<{ sort?: string; tab?: string }>;
 }
 
 async function getProfile(): Promise<Profile | null> {
