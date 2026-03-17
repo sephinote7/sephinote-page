@@ -42,6 +42,8 @@ export default function AdminWritePage() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [draftId, setDraftId] = useState<string | null>(null);
   const [isLoadingDraft, setIsLoadingDraft] = useState(true);
+  const [imageUrls, setImageUrls] = useState<string[]>([]);
+  const [thumbnailUrls, setThumbnailUrls] = useState<string[]>([]);
 
   const imageBucket = "post-images";
 
@@ -72,6 +74,8 @@ export default function AdminWritePage() {
         setTitle(latestDraft.title || "");
         setContent(latestDraft.content || "");
         setCategory((latestDraft.category as Post["category"]) || "portfolio");
+        setImageUrls((latestDraft.image_urls as string[]) || []);
+        setThumbnailUrls((latestDraft.thumbnail_urls as string[]) || []);
         if (latestDraft.location_name) {
           setLocationName(latestDraft.location_name);
           setIncludeLocation(true);
@@ -145,6 +149,9 @@ export default function AdminWritePage() {
       const { data } = supabase.storage.from(imageBucket).getPublicUrl(path);
       const url = data.publicUrl;
 
+      setImageUrls((prev) => [...prev, url]);
+      setThumbnailUrls((prev) => (prev.length > 0 ? prev : [url]));
+
       // 현재 커서 위치에 마크다운 이미지 삽입
       insertMarkdownAtCursor(`\n\n![](${url})\n\n`);
     }
@@ -172,6 +179,8 @@ export default function AdminWritePage() {
       content,
       category,
       location_name: includeLocation ? locationName.trim() || null : null,
+      image_urls: imageUrls,
+      thumbnail_urls: thumbnailUrls,
       is_published: true,
       del_yn: "N",
     };
@@ -213,6 +222,8 @@ export default function AdminWritePage() {
       content,
       category,
       location_name: includeLocation ? locationName.trim() || null : null,
+      image_urls: imageUrls,
+      thumbnail_urls: thumbnailUrls,
       is_published: false,
       del_yn: "N",
     };

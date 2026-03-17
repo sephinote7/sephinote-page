@@ -1,6 +1,7 @@
 import Link from "next/link";
 import Image from "next/image";
 import { Card, CardContent, Badge, Stack, Icon } from "@/components/ui";
+import { extractFirstMarkdownImageUrl, stripMarkdown } from "@/lib/markdown";
 import type { Post } from "@/types";
 
 interface PostCardProps {
@@ -29,7 +30,12 @@ function formatDate(dateString: string): string {
 }
 
 export default function PostCard({ post, variant = "default" }: PostCardProps) {
-  const thumbnailUrl = post.thumbnail_urls?.[0] || post.image_urls?.[0];
+  const thumbnailUrl =
+    post.thumbnail_urls?.[0] ||
+    post.image_urls?.[0] ||
+    extractFirstMarkdownImageUrl(post.content) ||
+    null;
+  const excerpt = stripMarkdown(post.content);
 
   if (variant === "featured") {
     return (
@@ -66,7 +72,7 @@ export default function PostCard({ post, variant = "default" }: PostCardProps) {
                 {post.title}
               </h3>
               <p className="text-sm text-zinc-500 dark:text-zinc-400 line-clamp-2">
-                {post.content.substring(0, 150)}...
+                {excerpt.substring(0, 150)}...
               </p>
               <Stack direction="row" gap="md" align="center" className="mt-2">
                 <Stack direction="row" gap="xs" align="center">
@@ -119,7 +125,7 @@ export default function PostCard({ post, variant = "default" }: PostCardProps) {
               {post.title}
             </h3>
             <p className="text-sm text-zinc-500 dark:text-zinc-400 line-clamp-2">
-              {post.content.substring(0, 100)}...
+              {excerpt.substring(0, 100)}...
             </p>
           </Stack>
         </CardContent>

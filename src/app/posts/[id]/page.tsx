@@ -89,6 +89,21 @@ const categoryColors: Record<Post["category"], "primary" | "success" | "secondar
 
 function renderContent(content: string) {
   return content.split("\n").map((line, idx) => {
+    const imageMatch = line.match(/!\[[^\]]*\]\((https?:\/\/[^\s)]+)\)/i);
+    if (imageMatch) {
+      const url = imageMatch[1];
+      return (
+        <div key={idx} className="my-6">
+          {/* next/image 최적화가 막히는 환경도 있어 img로 렌더링 */}
+          <img
+            src={url}
+            alt=""
+            className="w-full rounded-xl border border-zinc-200 dark:border-zinc-800"
+            loading="lazy"
+          />
+        </div>
+      );
+    }
     if (line.startsWith("## ")) {
       return (
         <h2 key={idx} className="text-2xl font-bold mt-8 mb-4 text-zinc-900 dark:text-zinc-100">
