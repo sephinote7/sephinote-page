@@ -254,6 +254,7 @@ export default function PostEditForm({ initialPost }: PostEditFormProps) {
           </div>
           <Stack direction="row" gap="sm">
             <Button
+              type="button"
               variant="danger"
               onClick={() => setShowDeleteConfirm(true)}
               leftIcon={<Icon name="close" size="sm" />}
@@ -296,6 +297,7 @@ export default function PostEditForm({ initialPost }: PostEditFormProps) {
               삭제
             </Button>
             <Button
+              type="button"
               variant="ghost"
               size="sm"
               onClick={() => setShowDeleteConfirm(false)}
@@ -336,6 +338,7 @@ export default function PostEditForm({ initialPost }: PostEditFormProps) {
                 </Label>
                 <Stack direction="row" gap="xs" wrap className="mb-3">
                   <Button
+                    type="button"
                     variant="outline"
                     size="sm"
                     onClick={() => applyMarkdownAroundSelection("**")}
@@ -344,6 +347,7 @@ export default function PostEditForm({ initialPost }: PostEditFormProps) {
                     Bold
                   </Button>
                   <Button
+                    type="button"
                     variant="outline"
                     size="sm"
                     onClick={() => applyMarkdownAroundSelection("*")}
@@ -352,6 +356,7 @@ export default function PostEditForm({ initialPost }: PostEditFormProps) {
                     Italic
                   </Button>
                   <Button
+                    type="button"
                     variant="outline"
                     size="sm"
                     onClick={() => insertMarkdownAtCursor("\n## ")}
@@ -360,6 +365,7 @@ export default function PostEditForm({ initialPost }: PostEditFormProps) {
                     H2
                   </Button>
                   <Button
+                    type="button"
                     variant="outline"
                     size="sm"
                     onClick={() => insertMarkdownAtCursor("\n### ")}
@@ -368,6 +374,7 @@ export default function PostEditForm({ initialPost }: PostEditFormProps) {
                     H3
                   </Button>
                   <Button
+                    type="button"
                     variant="outline"
                     size="sm"
                     onClick={() => insertMarkdownAtCursor("\n- ")}
@@ -376,6 +383,7 @@ export default function PostEditForm({ initialPost }: PostEditFormProps) {
                     List
                   </Button>
                   <Button
+                    type="button"
                     variant="outline"
                     size="sm"
                     onClick={() => insertMarkdownAtCursor("\n1. ")}
@@ -384,6 +392,7 @@ export default function PostEditForm({ initialPost }: PostEditFormProps) {
                     Number
                   </Button>
                   <Button
+                    type="button"
                     variant="outline"
                     size="sm"
                     onClick={() => applyMarkdownAroundSelection("`")}

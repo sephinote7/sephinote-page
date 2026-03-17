@@ -339,7 +339,7 @@ export default function AdminWritePage() {
               </p>
             </div>
             <Stack direction="row" gap="sm">
-              <Button variant="outline" onClick={handleSaveDraft} disabled={isBusy}>
+              <Button type="button" variant="outline" onClick={handleSaveDraft} disabled={isBusy}>
                 {submitAction === "draft" ? "Saving..." : "Save Draft"}
               </Button>
               <Button
@@ -391,25 +391,25 @@ export default function AdminWritePage() {
                     Content *
                   </Label>
                   <Stack direction="row" gap="xs" wrap className="mb-3">
-                    <Button variant="outline" size="sm" onClick={() => applyMarkdownAroundSelection("**")} disabled={isBusy}>
+                    <Button type="button" variant="outline" size="sm" onClick={() => applyMarkdownAroundSelection("**")} disabled={isBusy}>
                       Bold
                     </Button>
-                    <Button variant="outline" size="sm" onClick={() => applyMarkdownAroundSelection("*")} disabled={isBusy}>
+                    <Button type="button" variant="outline" size="sm" onClick={() => applyMarkdownAroundSelection("*")} disabled={isBusy}>
                       Italic
                     </Button>
-                    <Button variant="outline" size="sm" onClick={() => insertMarkdownAtCursor("\n## ")} disabled={isBusy}>
+                    <Button type="button" variant="outline" size="sm" onClick={() => insertMarkdownAtCursor("\n## ")} disabled={isBusy}>
                       H2
                     </Button>
-                    <Button variant="outline" size="sm" onClick={() => insertMarkdownAtCursor("\n### ")} disabled={isBusy}>
+                    <Button type="button" variant="outline" size="sm" onClick={() => insertMarkdownAtCursor("\n### ")} disabled={isBusy}>
                       H3
                     </Button>
-                    <Button variant="outline" size="sm" onClick={() => insertMarkdownAtCursor("\n- ")} disabled={isBusy}>
+                    <Button type="button" variant="outline" size="sm" onClick={() => insertMarkdownAtCursor("\n- ")} disabled={isBusy}>
                       List
                     </Button>
-                    <Button variant="outline" size="sm" onClick={() => insertMarkdownAtCursor("\n1. ")} disabled={isBusy}>
+                    <Button type="button" variant="outline" size="sm" onClick={() => insertMarkdownAtCursor("\n1. ")} disabled={isBusy}>
                       Number
                     </Button>
-                    <Button variant="outline" size="sm" onClick={() => applyMarkdownAroundSelection("`")} disabled={isBusy}>
+                    <Button type="button" variant="outline" size="sm" onClick={() => applyMarkdownAroundSelection("`")} disabled={isBusy}>
                       Code
                     </Button>
                   </Stack>
