@@ -247,7 +247,7 @@ export default function AdminWritePage() {
 
   return (
     <AdminLayout profile={profile}>
-      <div className="p-6 lg:p-8 max-w-5xl">
+      <div className="p-6 lg:p-8 max-w-5xl mx-auto w-full">
         {/* Header */}
         <div className="mb-8">
           <Stack direction="row" justify="between" align="center">
@@ -339,16 +339,6 @@ export default function AdminWritePage() {
                 </CardContent>
               </Card>
 
-              {/* Preview */}
-              <Card>
-                <CardContent>
-                  <Label className="mb-2">Preview</Label>
-                  <div className="prose prose-zinc dark:prose-invert max-w-none">
-                    <MarkdownContent content={content} />
-                  </div>
-                </CardContent>
-              </Card>
-
               {/* Images */}
               <Card>
                 <CardContent>
@@ -436,6 +426,18 @@ export default function AdminWritePage() {
                     <li>• 이미지는 가로 비율 권장</li>
                     <li>• Food 카테고리는 위치 추가 권장</li>
                   </ul>
+                </CardContent>
+              </Card>
+            </div>
+
+            {/* Preview (모바일: 가장 아래, 데스크탑: 왼쪽 컬럼 아래) */}
+            <div className="lg:col-span-2 lg:col-start-1">
+              <Card>
+                <CardContent>
+                  <Label className="mb-2">Preview</Label>
+                  <div className="prose prose-zinc dark:prose-invert max-w-none">
+                    <MarkdownContent content={content} />
+                  </div>
                 </CardContent>
               </Card>
             </div>

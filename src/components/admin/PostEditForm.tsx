@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase";
 import {
@@ -14,7 +14,6 @@ import {
   Textarea,
   Select,
   Label,
-  FileUpload,
   Switch,
   Alert,
 } from "@/components/ui";
@@ -27,15 +26,77 @@ interface PostEditFormProps {
 
 export default function PostEditForm({ initialPost }: PostEditFormProps) {
   const router = useRouter();
-  const supabase = createClient();
+  const supabase = useMemo(() => createClient(), []);
+  const textareaRef = useRef<HTMLTextAreaElement | null>(null);
 
   const [title, setTitle] = useState(initialPost.title);
   const [content, setContent] = useState(initialPost.content);
   const [category, setCategory] = useState<Post["category"]>(initialPost.category);
   const [locationName, setLocationName] = useState(initialPost.location_name || "");
   const [includeLocation, setIncludeLocation] = useState(!!initialPost.location_name);
+  const [imageUrls, setImageUrls] = useState<string[]>(
+    (initialPost.image_urls as string[]) || []
+  );
+  const [thumbnailUrls, setThumbnailUrls] = useState<string[]>(
+    (initialPost.thumbnail_urls as string[]) || []
+  );
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+
+  const imageBucket = "post-images";
+
+  const insertMarkdownAtCursor = (text: string) => {
+    const el = textareaRef.current;
+    if (!el) return;
+    const start = el.selectionStart ?? content.length;
+    const end = el.selectionEnd ?? content.length;
+    const next = content.slice(0, start) + text + content.slice(end);
+    setContent(next);
+    requestAnimationFrame(() => {
+      el.focus();
+      const cursor = start + text.length;
+      el.setSelectionRange(cursor, cursor);
+    });
+  };
+
+  const handleUploadImages = async (files: FileList | null) => {
+    if (!files || files.length === 0) return;
+
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+
+    if (!user) {
+      alert("로그인이 필요합니다.");
+      router.replace("/admin/login");
+      return;
+    }
+
+    for (const file of Array.from(files)) {
+      const safeName = file.name.replace(/\s+/g, "-");
+      const path = `posts/${user.id}/${Date.now()}-${safeName}`;
+
+      const { error: uploadError } = await supabase.storage
+        .from(imageBucket)
+        .upload(path, file, { upsert: false });
+
+      if (uploadError) {
+        console.error(uploadError);
+        alert(
+          `이미지 업로드 실패: ${file.name}\n(스토리지 버킷 "${imageBucket}" 설정을 확인해주세요.)`
+        );
+        continue;
+      }
+
+      const { data } = supabase.storage.from(imageBucket).getPublicUrl(path);
+      const url = data.publicUrl;
+
+      setImageUrls((prev) => [...prev, url]);
+      setThumbnailUrls((prev) => (prev.length > 0 ? prev : [url]));
+
+      insertMarkdownAtCursor(`\n\n![](${url})\n\n`);
+    }
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -50,6 +111,8 @@ export default function PostEditForm({ initialPost }: PostEditFormProps) {
         content,
         category,
         location_name: includeLocation ? locationName.trim() || null : null,
+        image_urls: imageUrls,
+        thumbnail_urls: thumbnailUrls,
       })
       .eq("id", initialPost.id)
       .eq("del_yn", "N");
@@ -87,7 +150,7 @@ export default function PostEditForm({ initialPost }: PostEditFormProps) {
   };
 
   return (
-    <div className="max-w-5xl">
+    <div className="max-w-5xl mx-auto w-full">
       {/* Header */}
       <div className="mb-8">
         <Stack direction="row" justify="between" align="center">
@@ -172,29 +235,25 @@ export default function PostEditForm({ initialPost }: PostEditFormProps) {
                   onChange={(e) => setContent(e.target.value)}
                   rows={16}
                   className="font-mono"
+                  ref={textareaRef}
                 />
               </CardContent>
             </Card>
 
-            {/* Preview */}
-            <Card>
-              <CardContent>
-                <Label className="mb-2">Preview</Label>
-                <div className="prose prose-zinc dark:prose-invert max-w-none">
-                  <MarkdownContent content={content} />
-                </div>
-              </CardContent>
-            </Card>
-
-            {/* Images (UI만 유지, 실제 업로드 로직은 추후 구현) */}
+            {/* Images */}
             <Card>
               <CardContent>
                 <Label className="mb-2">Images</Label>
-                <FileUpload
+                <input
+                  type="file"
                   accept="image/*"
                   multiple
-                  onChange={(files) => console.log(files)}
+                  onChange={(e) => handleUploadImages(e.target.files)}
+                  className="block w-full text-sm text-zinc-600 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-medium file:bg-zinc-100 file:text-zinc-700 hover:file:bg-zinc-200 dark:text-zinc-300 dark:file:bg-zinc-800 dark:file:text-zinc-200 dark:hover:file:bg-zinc-700"
                 />
+                <p className="text-xs text-zinc-400 mt-2">
+                  업로드한 이미지는 현재 커서 위치에 마크다운으로 삽입됩니다.
+                </p>
               </CardContent>
             </Card>
           </div>
@@ -265,6 +324,18 @@ export default function PostEditForm({ initialPost }: PostEditFormProps) {
                     <span>Post ID:</span>
                     <span className="font-mono text-xs">{initialPost.id}</span>
                   </div>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+
+          {/* Preview (모바일: 가장 아래, 데스크탑: 왼쪽 컬럼 아래) */}
+          <div className="lg:col-span-2 lg:col-start-1 order-last">
+            <Card>
+              <CardContent>
+                <Label className="mb-2">Preview</Label>
+                <div className="prose prose-zinc dark:prose-invert max-w-none">
+                  <MarkdownContent content={content} />
                 </div>
               </CardContent>
             </Card>
