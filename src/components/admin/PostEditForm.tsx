@@ -18,6 +18,7 @@ import {
   Switch,
   Alert,
 } from "@/components/ui";
+import MarkdownContent from "@/components/markdown/MarkdownContent";
 import type { Post } from "@/types";
 
 interface PostEditFormProps {
@@ -172,6 +173,16 @@ export default function PostEditForm({ initialPost }: PostEditFormProps) {
                   rows={16}
                   className="font-mono"
                 />
+              </CardContent>
+            </Card>
+
+            {/* Preview */}
+            <Card>
+              <CardContent>
+                <Label className="mb-2">Preview</Label>
+                <div className="prose prose-zinc dark:prose-invert max-w-none">
+                  <MarkdownContent content={content} />
+                </div>
               </CardContent>
             </Card>
 

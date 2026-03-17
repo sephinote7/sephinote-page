@@ -4,6 +4,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase";
 import { AdminLayout } from "@/components/layout";
+import MarkdownContent from "@/components/markdown/MarkdownContent";
 import {
   Card,
   CardContent,
@@ -335,6 +336,16 @@ export default function AdminWritePage() {
                   <p className="text-xs text-zinc-400 mt-2">
                     Markdown 문법을 사용할 수 있습니다. (## 제목, **굵게**, - 목록 등)
                   </p>
+                </CardContent>
+              </Card>
+
+              {/* Preview */}
+              <Card>
+                <CardContent>
+                  <Label className="mb-2">Preview</Label>
+                  <div className="prose prose-zinc dark:prose-invert max-w-none">
+                    <MarkdownContent content={content} />
+                  </div>
                 </CardContent>
               </Card>
 

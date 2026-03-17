@@ -6,6 +6,7 @@ import { MainLayout } from "@/components/layout";
 import { CommentSection, KakaoMap, PostAdminActions } from "@/components/post";
 import { Stack, Badge, Icon, Avatar, Divider } from "@/components/ui";
 import { formatRelativeTimeFromNow } from "@/lib/date";
+import MarkdownContent from "@/components/markdown/MarkdownContent";
 import type { Post, Profile, Comment } from "@/types";
 
 interface PageProps {
@@ -87,82 +88,6 @@ const categoryColors: Record<Post["category"], "primary" | "success" | "secondar
   drawing: "secondary",
 };
 
-function renderContent(content: string) {
-  return content.split("\n").map((line, idx) => {
-    const imageMatch = line.match(/!\[[^\]]*\]\((https?:\/\/.+?)\)/i);
-    if (imageMatch) {
-      const url = imageMatch[1].trim();
-      return (
-        <div key={idx} className="my-6">
-          {/* next/image 최적화가 막히는 환경도 있어 img로 렌더링 */}
-          <img
-            src={url}
-            alt=""
-            className="w-full rounded-xl border border-zinc-200 dark:border-zinc-800"
-            loading="lazy"
-          />
-        </div>
-      );
-    }
-    if (line.startsWith("## ")) {
-      return (
-        <h2 key={idx} className="text-2xl font-bold mt-8 mb-4 text-zinc-900 dark:text-zinc-100">
-          {line.replace("## ", "")}
-        </h2>
-      );
-    }
-    if (line.startsWith("### ")) {
-      return (
-        <h3 key={idx} className="text-xl font-semibold mt-6 mb-3 text-zinc-900 dark:text-zinc-100">
-          {line.replace("### ", "")}
-        </h3>
-      );
-    }
-    if (line.startsWith("- **")) {
-      const match = line.match(/- \*\*(.+?)\*\*: (.+)/);
-      if (match) {
-        return (
-          <li key={idx} className="ml-4 mb-2 text-zinc-600 dark:text-zinc-400">
-            <strong className="text-zinc-900 dark:text-zinc-100">{match[1]}</strong>: {match[2]}
-          </li>
-        );
-      }
-    }
-    if (line.startsWith("- ")) {
-      return (
-        <li key={idx} className="ml-4 mb-2 text-zinc-600 dark:text-zinc-400">
-          {line.replace("- ", "")}
-        </li>
-      );
-    }
-    if (line.match(/^\d+\. \*\*/)) {
-      const match = line.match(/^\d+\. \*\*(.+?)\*\*: (.+)/);
-      if (match) {
-        return (
-          <li key={idx} className="ml-4 mb-2 list-decimal text-zinc-600 dark:text-zinc-400">
-            <strong className="text-zinc-900 dark:text-zinc-100">{match[1]}</strong>: {match[2]}
-          </li>
-        );
-      }
-    }
-    if (line.match(/^\d+\. /)) {
-      return (
-        <li key={idx} className="ml-4 mb-2 list-decimal text-zinc-600 dark:text-zinc-400">
-          {line.replace(/^\d+\. /, "")}
-        </li>
-      );
-    }
-    if (line.trim()) {
-      return (
-        <p key={idx} className="mb-4 text-zinc-600 dark:text-zinc-400 leading-relaxed">
-          {line}
-        </p>
-      );
-    }
-    return null;
-  });
-}
-
 export default async function PostDetailPage({ params }: PageProps) {
   const { id } = await params;
   const { profile, isAdmin } = await getProfileWithAuth();
@@ -241,7 +166,7 @@ export default async function PostDetailPage({ params }: PageProps) {
 
         {/* Content */}
         <div className="prose prose-zinc dark:prose-invert max-w-none mb-12">
-          {renderContent(post.content)}
+          <MarkdownContent content={post.content} />
         </div>
 
         {/* Map for Food/Drawing posts */}
