@@ -50,6 +50,7 @@ export default function AdminWritePage() {
 
   const imageBucket = "post-images";
   const isBusy = isSubmitting || isLoadingDraft;
+  const indentUnit = "  ";
 
   useEffect(() => {
     async function guardAndLoadDraft() {
@@ -121,6 +122,72 @@ export default function AdminWritePage() {
       const cursor = start + text.length;
       el.setSelectionRange(cursor, cursor);
     });
+  };
+
+  const handleContentKeyDown: React.KeyboardEventHandler<HTMLTextAreaElement> = (e) => {
+    if (isBusy) return;
+    if (e.key !== "Tab") return;
+    e.preventDefault();
+
+    const el = textareaRef.current;
+    if (!el) return;
+
+    const start = el.selectionStart ?? 0;
+    const end = el.selectionEnd ?? 0;
+    const selected = content.slice(start, end);
+
+    // Multi-line selection: indent/outdent each selected line
+    if (selected.includes("\n")) {
+      const before = content.slice(0, start);
+      const after = content.slice(end);
+
+      const lineStart = before.lastIndexOf("\n") + 1;
+      const selectionPrefix = content.slice(lineStart, start);
+      const selectionText = selectionPrefix + selected;
+      const lines = selectionText.split("\n");
+
+      const updatedLines = e.shiftKey
+        ? lines.map((line) => {
+            if (line.startsWith("\t")) return line.slice(1);
+            if (line.startsWith(indentUnit)) return line.slice(indentUnit.length);
+            return line;
+          })
+        : lines.map((line) => indentUnit + line);
+
+      const updatedSelectionText = updatedLines.join("\n");
+      const next = content.slice(0, lineStart) + updatedSelectionText + after;
+      setContent(next);
+
+      requestAnimationFrame(() => {
+        el.focus();
+        const delta = updatedSelectionText.length - selectionText.length;
+        el.setSelectionRange(start + (e.shiftKey ? 0 : indentUnit.length), end + delta);
+      });
+      return;
+    }
+
+    // Single line (or no selection): insert indent or outdent at caret line start
+    if (e.shiftKey) {
+      const lineStart = content.lastIndexOf("\n", start - 1) + 1;
+      const linePrefix = content.slice(lineStart, start);
+      const canOutdentTab = linePrefix.startsWith("\t");
+      const canOutdentSpaces = linePrefix.startsWith(indentUnit);
+
+      if (canOutdentTab || canOutdentSpaces) {
+        const removeLen = canOutdentTab ? 1 : indentUnit.length;
+        const prefixNext = linePrefix.slice(removeLen);
+        const next = content.slice(0, lineStart) + prefixNext + content.slice(start);
+        setContent(next);
+        requestAnimationFrame(() => {
+          el.focus();
+          const cursor = Math.max(lineStart, start - removeLen);
+          el.setSelectionRange(cursor, cursor);
+        });
+      }
+      return;
+    }
+
+    insertMarkdownAtCursor(indentUnit);
   };
 
   const handleUploadImages = async (files: FileList | null) => {
@@ -351,6 +418,7 @@ export default function AdminWritePage() {
                     placeholder="게시글 내용을 입력하세요. Markdown 문법을 지원합니다."
                     value={content}
                     onChange={(e) => setContent(e.target.value)}
+                    onKeyDown={handleContentKeyDown}
                     rows={16}
                     className="font-mono"
                     ref={textareaRef}
