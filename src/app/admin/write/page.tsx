@@ -17,6 +17,7 @@ import {
   Select,
   Label,
   Switch,
+  Alert,
 } from "@/components/ui";
 import type { Post, Profile } from "@/types";
 
@@ -41,12 +42,14 @@ export default function AdminWritePage() {
   const [locationName, setLocationName] = useState("");
   const [includeLocation, setIncludeLocation] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [submitAction, setSubmitAction] = useState<"publish" | "draft" | null>(null);
   const [draftId, setDraftId] = useState<string | null>(null);
   const [isLoadingDraft, setIsLoadingDraft] = useState(true);
   const [imageUrls, setImageUrls] = useState<string[]>([]);
   const [thumbnailUrls, setThumbnailUrls] = useState<string[]>([]);
 
   const imageBucket = "post-images";
+  const isBusy = isSubmitting || isLoadingDraft;
 
   useEffect(() => {
     async function guardAndLoadDraft() {
@@ -121,6 +124,7 @@ export default function AdminWritePage() {
   };
 
   const handleUploadImages = async (files: FileList | null) => {
+    if (isBusy) return;
     if (!files || files.length === 0) return;
 
     const {
@@ -160,9 +164,11 @@ export default function AdminWritePage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (isBusy) return;
     if (!title.trim() || !content.trim()) return;
 
     setIsSubmitting(true);
+    setSubmitAction("publish");
 
     const {
       data: { user },
@@ -170,6 +176,7 @@ export default function AdminWritePage() {
 
     if (!user) {
       setIsSubmitting(false);
+      setSubmitAction(null);
       router.replace("/admin/login");
       return;
     }
@@ -192,6 +199,7 @@ export default function AdminWritePage() {
       : await supabase.from("posts").insert(payload).select().single();
 
     setIsSubmitting(false);
+    setSubmitAction(null);
 
     if (error || !data) {
       console.error(error);
@@ -201,11 +209,13 @@ export default function AdminWritePage() {
 
     setDraftId(data.id);
     alert("게시글이 등록되었습니다!");
-    router.push("/admin");
+    router.push(`/posts/${data.id}`);
   };
 
   const handleSaveDraft = async () => {
+    if (isBusy) return;
     setIsSubmitting(true);
+    setSubmitAction("draft");
 
     const {
       data: { user },
@@ -213,6 +223,7 @@ export default function AdminWritePage() {
 
     if (!user) {
       setIsSubmitting(false);
+      setSubmitAction(null);
       router.replace("/admin/login");
       return;
     }
@@ -234,6 +245,7 @@ export default function AdminWritePage() {
       : await supabase.from("posts").insert(payload).select().single();
 
     setIsSubmitting(false);
+    setSubmitAction(null);
 
     if (error || !data) {
       console.error(error);
@@ -260,20 +272,29 @@ export default function AdminWritePage() {
               </p>
             </div>
             <Stack direction="row" gap="sm">
-              <Button variant="outline" onClick={handleSaveDraft} disabled={isSubmitting || isLoadingDraft}>
-                Save Draft
+              <Button variant="outline" onClick={handleSaveDraft} disabled={isBusy}>
+                {submitAction === "draft" ? "Saving..." : "Save Draft"}
               </Button>
               <Button
                 variant="primary"
                 onClick={handleSubmit}
-                disabled={isSubmitting || isLoadingDraft || !title.trim() || !content.trim()}
+                disabled={isBusy || !title.trim() || !content.trim()}
                 leftIcon={<Icon name="check" size="sm" />}
               >
-                {isSubmitting ? "Publishing..." : "Publish"}
+                {submitAction === "publish" ? "Publishing..." : "Publish"}
               </Button>
             </Stack>
           </Stack>
         </div>
+
+        {isBusy && (
+          <Alert
+            variant="info"
+            className="mb-6"
+            title={isLoadingDraft ? "임시저장 불러오는 중..." : "처리 중입니다..."}
+            description="작업이 끝날 때까지 입력을 잠시만 기다려주세요."
+          />
+        )}
 
         <form onSubmit={handleSubmit}>
           <Grid cols={1} colsLg={3} gap="lg">
@@ -291,6 +312,7 @@ export default function AdminWritePage() {
                     value={title}
                     onChange={(e) => setTitle(e.target.value)}
                     className="text-lg"
+                    disabled={isBusy}
                   />
                 </CardContent>
               </Card>
@@ -302,25 +324,25 @@ export default function AdminWritePage() {
                     Content *
                   </Label>
                   <Stack direction="row" gap="xs" wrap className="mb-3">
-                    <Button variant="outline" size="sm" onClick={() => applyMarkdownAroundSelection("**")} disabled={isSubmitting}>
+                    <Button variant="outline" size="sm" onClick={() => applyMarkdownAroundSelection("**")} disabled={isBusy}>
                       Bold
                     </Button>
-                    <Button variant="outline" size="sm" onClick={() => applyMarkdownAroundSelection("*")} disabled={isSubmitting}>
+                    <Button variant="outline" size="sm" onClick={() => applyMarkdownAroundSelection("*")} disabled={isBusy}>
                       Italic
                     </Button>
-                    <Button variant="outline" size="sm" onClick={() => insertMarkdownAtCursor("\n## ")} disabled={isSubmitting}>
+                    <Button variant="outline" size="sm" onClick={() => insertMarkdownAtCursor("\n## ")} disabled={isBusy}>
                       H2
                     </Button>
-                    <Button variant="outline" size="sm" onClick={() => insertMarkdownAtCursor("\n### ")} disabled={isSubmitting}>
+                    <Button variant="outline" size="sm" onClick={() => insertMarkdownAtCursor("\n### ")} disabled={isBusy}>
                       H3
                     </Button>
-                    <Button variant="outline" size="sm" onClick={() => insertMarkdownAtCursor("\n- ")} disabled={isSubmitting}>
+                    <Button variant="outline" size="sm" onClick={() => insertMarkdownAtCursor("\n- ")} disabled={isBusy}>
                       List
                     </Button>
-                    <Button variant="outline" size="sm" onClick={() => insertMarkdownAtCursor("\n1. ")} disabled={isSubmitting}>
+                    <Button variant="outline" size="sm" onClick={() => insertMarkdownAtCursor("\n1. ")} disabled={isBusy}>
                       Number
                     </Button>
-                    <Button variant="outline" size="sm" onClick={() => applyMarkdownAroundSelection("`")} disabled={isSubmitting}>
+                    <Button variant="outline" size="sm" onClick={() => applyMarkdownAroundSelection("`")} disabled={isBusy}>
                       Code
                     </Button>
                   </Stack>
@@ -332,6 +354,7 @@ export default function AdminWritePage() {
                     rows={16}
                     className="font-mono"
                     ref={textareaRef}
+                    disabled={isBusy}
                   />
                   <p className="text-xs text-zinc-400 mt-2">
                     Markdown 문법을 사용할 수 있습니다. (## 제목, **굵게**, - 목록 등)
@@ -348,6 +371,7 @@ export default function AdminWritePage() {
                     accept="image/*"
                     multiple
                     onChange={(e) => handleUploadImages(e.target.files)}
+                    disabled={isBusy}
                     className="block w-full text-sm text-zinc-600 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-medium file:bg-zinc-100 file:text-zinc-700 hover:file:bg-zinc-200 dark:text-zinc-300 dark:file:bg-zinc-800 dark:file:text-zinc-200 dark:hover:file:bg-zinc-700"
                   />
                   <p className="text-xs text-zinc-400 mt-2">
@@ -369,6 +393,7 @@ export default function AdminWritePage() {
                     id="category"
                     value={category}
                     onChange={(e) => setCategory(e.target.value as Post["category"])}
+                    disabled={isBusy}
                     options={[
                       { value: "portfolio", label: "Portfolio" },
                       { value: "food", label: "Food" },
@@ -386,6 +411,7 @@ export default function AdminWritePage() {
                     <Switch
                       checked={includeLocation}
                       onChange={(e) => setIncludeLocation(e.target.checked)}
+                      disabled={isBusy}
                     />
                   </Stack>
                   {includeLocation && (
@@ -394,6 +420,7 @@ export default function AdminWritePage() {
                         placeholder="장소 이름"
                         value={locationName}
                         onChange={(e) => setLocationName(e.target.value)}
+                        disabled={isBusy}
                       />
                       <div className="aspect-video bg-zinc-100 dark:bg-zinc-800 rounded-lg flex items-center justify-center">
                         <Stack align="center" gap="sm" className="text-center">

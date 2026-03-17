@@ -41,9 +41,11 @@ export default function PostEditForm({ initialPost }: PostEditFormProps) {
     (initialPost.thumbnail_urls as string[]) || []
   );
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [submitAction, setSubmitAction] = useState<"save" | "delete" | null>(null);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
 
   const imageBucket = "post-images";
+  const isBusy = isSubmitting;
 
   const insertMarkdownAtCursor = (text: string) => {
     const el = textareaRef.current;
@@ -60,6 +62,7 @@ export default function PostEditForm({ initialPost }: PostEditFormProps) {
   };
 
   const handleUploadImages = async (files: FileList | null) => {
+    if (isBusy) return;
     if (!files || files.length === 0) return;
 
     const {
@@ -100,9 +103,11 @@ export default function PostEditForm({ initialPost }: PostEditFormProps) {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (isBusy) return;
     if (!title.trim() || !content.trim()) return;
 
     setIsSubmitting(true);
+    setSubmitAction("save");
 
     const { error } = await supabase
       .from("posts")
@@ -118,6 +123,7 @@ export default function PostEditForm({ initialPost }: PostEditFormProps) {
       .eq("del_yn", "N");
 
     setIsSubmitting(false);
+    setSubmitAction(null);
 
     if (error) {
       console.error(error);
@@ -126,11 +132,13 @@ export default function PostEditForm({ initialPost }: PostEditFormProps) {
     }
 
     alert("게시글이 수정되었습니다!");
-    router.push("/admin");
+    router.push(`/posts/${initialPost.id}`);
   };
 
   const handleDelete = async () => {
+    if (isBusy) return;
     setIsSubmitting(true);
+    setSubmitAction("delete");
 
     const { error } = await supabase
       .from("posts")
@@ -138,6 +146,7 @@ export default function PostEditForm({ initialPost }: PostEditFormProps) {
       .eq("id", initialPost.id);
 
     setIsSubmitting(false);
+    setSubmitAction(null);
 
     if (error) {
       console.error(error);
@@ -167,21 +176,31 @@ export default function PostEditForm({ initialPost }: PostEditFormProps) {
               variant="danger"
               onClick={() => setShowDeleteConfirm(true)}
               leftIcon={<Icon name="close" size="sm" />}
+              disabled={isBusy}
             >
               Delete
             </Button>
             <Button
               variant="primary"
               onClick={handleSubmit}
-              disabled={isSubmitting || !title.trim() || !content.trim()}
+              disabled={isBusy || !title.trim() || !content.trim()}
               leftIcon={<Icon name="check" size="sm" />}
               isLoading={isSubmitting}
             >
-              Save Changes
+              {submitAction === "save" ? "Saving..." : "Save Changes"}
             </Button>
           </Stack>
         </Stack>
       </div>
+
+      {isBusy && (
+        <Alert
+          variant="info"
+          className="mb-6"
+          title={submitAction === "delete" ? "삭제 처리 중..." : "저장 중..."}
+          description="작업이 끝날 때까지 추가 입력을 잠시만 기다려주세요."
+        />
+      )}
 
       {/* Delete Confirmation */}
       {showDeleteConfirm && (
@@ -192,10 +211,15 @@ export default function PostEditForm({ initialPost }: PostEditFormProps) {
           description="이 작업은 되돌릴 수 없습니다. 모든 댓글도 함께 숨겨집니다."
         >
           <Stack direction="row" gap="sm" className="mt-4">
-            <Button variant="danger" size="sm" onClick={handleDelete}>
+            <Button variant="danger" size="sm" onClick={handleDelete} disabled={isBusy}>
               삭제
             </Button>
-            <Button variant="ghost" size="sm" onClick={() => setShowDeleteConfirm(false)}>
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => setShowDeleteConfirm(false)}
+              disabled={isBusy}
+            >
               취소
             </Button>
           </Stack>
@@ -218,6 +242,7 @@ export default function PostEditForm({ initialPost }: PostEditFormProps) {
                   value={title}
                   onChange={(e) => setTitle(e.target.value)}
                   className="text-lg"
+                  disabled={isBusy}
                 />
               </CardContent>
             </Card>
@@ -236,6 +261,7 @@ export default function PostEditForm({ initialPost }: PostEditFormProps) {
                   rows={16}
                   className="font-mono"
                   ref={textareaRef}
+                  disabled={isBusy}
                 />
               </CardContent>
             </Card>
@@ -249,6 +275,7 @@ export default function PostEditForm({ initialPost }: PostEditFormProps) {
                   accept="image/*"
                   multiple
                   onChange={(e) => handleUploadImages(e.target.files)}
+                  disabled={isBusy}
                   className="block w-full text-sm text-zinc-600 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-medium file:bg-zinc-100 file:text-zinc-700 hover:file:bg-zinc-200 dark:text-zinc-300 dark:file:bg-zinc-800 dark:file:text-zinc-200 dark:hover:file:bg-zinc-700"
                 />
                 <p className="text-xs text-zinc-400 mt-2">
@@ -270,6 +297,7 @@ export default function PostEditForm({ initialPost }: PostEditFormProps) {
                   id="category"
                   value={category}
                   onChange={(e) => setCategory(e.target.value as Post["category"])}
+                  disabled={isBusy}
                   options={[
                     { value: "portfolio", label: "Portfolio" },
                     { value: "food", label: "Food" },
@@ -287,6 +315,7 @@ export default function PostEditForm({ initialPost }: PostEditFormProps) {
                   <Switch
                     checked={includeLocation}
                     onChange={(e) => setIncludeLocation(e.target.checked)}
+                    disabled={isBusy}
                   />
                 </Stack>
                 {includeLocation && (
@@ -295,6 +324,7 @@ export default function PostEditForm({ initialPost }: PostEditFormProps) {
                       placeholder="장소 이름"
                       value={locationName}
                       onChange={(e) => setLocationName(e.target.value)}
+                      disabled={isBusy}
                     />
                     <div className="aspect-video bg-zinc-100 dark:bg-zinc-800 rounded-lg flex items-center justify-center">
                       <Stack align="center" gap="sm" className="text-center">
