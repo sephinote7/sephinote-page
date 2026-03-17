@@ -1,7 +1,6 @@
 import Link from "next/link";
 import Image from "next/image";
 import { Card, CardContent, Badge, Stack, Icon } from "@/components/ui";
-import { formatRelativeTimeFromNow } from "@/lib/date";
 import type { Post } from "@/types";
 
 interface PostCardProps {
@@ -30,7 +29,6 @@ function formatDate(dateString: string): string {
 }
 
 export default function PostCard({ post, variant = "default" }: PostCardProps) {
-  const relativeTime = formatRelativeTimeFromNow(post.created_at);
   const thumbnailUrl = post.thumbnail_urls?.[0] || post.image_urls?.[0];
 
   if (variant === "featured") {
@@ -63,7 +61,6 @@ export default function PostCard({ post, variant = "default" }: PostCardProps) {
                 <Badge variant={categoryColors[post.category]} size="sm">
                   {categoryLabels[post.category]}
                 </Badge>
-                <span className="text-xs text-zinc-500">{relativeTime}</span>
               </Stack>
               <h3 className="text-xl font-bold text-zinc-900 dark:text-zinc-100 group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors line-clamp-2">
                 {post.title}
@@ -117,7 +114,6 @@ export default function PostCard({ post, variant = "default" }: PostCardProps) {
               <Badge variant={categoryColors[post.category]} size="sm">
                 {categoryLabels[post.category]}
               </Badge>
-              <span className="text-xs text-zinc-500">{relativeTime}</span>
             </Stack>
             <h3 className="font-semibold text-zinc-900 dark:text-zinc-100 group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors line-clamp-2">
               {post.title}

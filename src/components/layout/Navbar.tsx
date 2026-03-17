@@ -1,14 +1,14 @@
 "use client";
 
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useSearchParams } from "next/navigation";
 import { useState } from "react";
 import { Container, Stack, Button, Icon, Avatar } from "@/components/ui";
 
 const navItems = [
-  { href: "/", label: "Home" },
-  { href: "/works", label: "Works" },
-  { href: "/life", label: "Life" },
+  { href: "/", label: "Latest Posts" },
+  { href: "/?sort=popular", label: "Popular" },
+  { href: "/life", label: "Board" },
 ];
 
 interface NavbarProps {
@@ -20,6 +20,7 @@ interface NavbarProps {
 
 export default function Navbar({ profile }: NavbarProps) {
   const pathname = usePathname();
+  const searchParams = useSearchParams();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   return (
@@ -42,7 +43,11 @@ export default function Navbar({ profile }: NavbarProps) {
           {/* Desktop Navigation */}
           <Stack direction="row" gap="xs" className="hidden md:flex">
             {navItems.map((item) => {
-              const isActive = pathname === item.href;
+              const isPopular = searchParams.get("sort") === "popular";
+              const isActive =
+                (item.href === "/" && pathname === "/" && !isPopular) ||
+                (item.href === "/?sort=popular" && pathname === "/" && isPopular) ||
+                (item.href === "/life" && pathname.startsWith("/life"));
               return (
                 <Link
                   key={item.href}

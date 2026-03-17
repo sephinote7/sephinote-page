@@ -30,7 +30,7 @@ export default function PostEditForm({ initialPost }: PostEditFormProps) {
 
   const [title, setTitle] = useState(initialPost.title);
   const [content, setContent] = useState(initialPost.content);
-  const [category, setCategory] = useState(initialPost.category);
+  const [category, setCategory] = useState<Post["category"]>(initialPost.category);
   const [locationName, setLocationName] = useState(initialPost.location_name || "");
   const [includeLocation, setIncludeLocation] = useState(!!initialPost.location_name);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -199,7 +199,7 @@ export default function PostEditForm({ initialPost }: PostEditFormProps) {
                 <Select
                   id="category"
                   value={category}
-                  onChange={(e) => setCategory(e.target.value)}
+                  onChange={(e) => setCategory(e.target.value as Post["category"])}
                   options={[
                     { value: "portfolio", label: "Portfolio" },
                     { value: "food", label: "Food" },

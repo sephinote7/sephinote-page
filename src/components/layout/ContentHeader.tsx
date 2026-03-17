@@ -11,12 +11,11 @@ interface Tab {
   href: string;
 }
 
+// 상단 탭: Latest Posts / Popular / Board
 const tabs: Tab[] = [
   { id: "latest", label: "Latest Posts", href: "/" },
   { id: "popular", label: "Popular", href: "/?sort=popular" },
-  { id: "works", label: "Works", href: "/works" },
-  { id: "food", label: "Food", href: "/life?category=food" },
-  { id: "drawing", label: "Drawing", href: "/life?category=drawing" },
+  { id: "board", label: "Board", href: "/life" },
 ];
 
 interface ContentHeaderProps {
