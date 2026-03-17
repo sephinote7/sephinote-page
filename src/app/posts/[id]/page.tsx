@@ -89,9 +89,9 @@ const categoryColors: Record<Post["category"], "primary" | "success" | "secondar
 
 function renderContent(content: string) {
   return content.split("\n").map((line, idx) => {
-    const imageMatch = line.match(/!\[[^\]]*\]\((https?:\/\/[^\s)]+)\)/i);
+    const imageMatch = line.match(/!\[[^\]]*\]\((https?:\/\/.+?)\)/i);
     if (imageMatch) {
-      const url = imageMatch[1];
+      const url = imageMatch[1].trim();
       return (
         <div key={idx} className="my-6">
           {/* next/image 최적화가 막히는 환경도 있어 img로 렌더링 */}

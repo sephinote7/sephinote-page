@@ -1,7 +1,12 @@
 export function extractFirstMarkdownImageUrl(markdown: string): string | null {
   if (!markdown) return null;
-  const match = markdown.match(/!\[[^\]]*\]\((https?:\/\/[^\s)]+)\)/i);
-  return match?.[1] ?? null;
+  // 파일명에 ')'가 포함될 수 있어, 라인 기준으로 가장 마지막 ')'를 닫는 것으로 처리
+  const match = markdown.match(/!\[[^\]]*\]\((https?:\/\/.+?)\)\s*$/im);
+  if (match?.[1]) return match[1].trim();
+
+  // 라인 끝이 아닌 경우(문장 중간)도 보완
+  const matchInline = markdown.match(/!\[[^\]]*\]\((https?:\/\/.+?)\)/i);
+  return matchInline?.[1]?.trim() ?? null;
 }
 
 export function stripMarkdown(markdown: string): string {
