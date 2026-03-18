@@ -126,14 +126,16 @@ function CommentItem({
             </Stack>
             {!isDeleted && (
               <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                <button
-                  type="button"
-                  onClick={() => onStartEdit(comment)}
-                  className="p-1 rounded hover:bg-zinc-100 dark:hover:bg-zinc-800"
-                  aria-label="댓글 수정"
-                >
-                  <Icon name="settings" size="xs" className="text-zinc-400" />
-                </button>
+                {!isLoggedIn && (
+                  <button
+                    type="button"
+                    onClick={() => onStartEdit(comment)}
+                    className="p-1 rounded hover:bg-zinc-100 dark:hover:bg-zinc-800"
+                    aria-label="댓글 수정"
+                  >
+                    <Icon name="settings" size="xs" className="text-zinc-400" />
+                  </button>
+                )}
                 <button
                   type="button"
                   onClick={() => onDeleteComment(comment)}
@@ -155,7 +157,7 @@ function CommentItem({
 
           {/* Inline Edit Form (댓글 본문과 Reply 사이) */}
           {!isDeleted && isEditing && (
-            <div className="mt-3 p-3 bg-zinc-50 dark:bg-zinc-800/50 rounded-lg">
+            <div className="mt-3 p-4 bg-zinc-50 dark:bg-zinc-800/50 rounded-lg w-full">
               <Textarea
                 placeholder="수정할 내용을 입력하세요..."
                 rows={2}
@@ -164,10 +166,10 @@ function CommentItem({
                 onChange={(e) => onChangeEditContent(e.target.value)}
                 disabled={isProcessingComment}
               />
-              <Stack direction="row" gap="sm" justify="between" align="center" wrap>
+              <div className="flex items-center justify-between gap-3 flex-wrap w-full">
                 {!isLoggedIn ? (
-                  <Stack direction="row" gap="sm" align="center" wrap>
-                    <p className="text-sm text-zinc-500">
+                  <div className="flex items-center gap-3 flex-wrap min-w-0">
+                    <p className="text-sm text-zinc-500 whitespace-nowrap">
                       <span className="font-medium text-zinc-700 dark:text-zinc-300">
                         {comment.nickname}
                       </span>
@@ -181,7 +183,7 @@ function CommentItem({
                       onChange={(e) => onChangeEditPassword(e.target.value)}
                       disabled={isProcessingComment}
                     />
-                  </Stack>
+                  </div>
                 ) : (
                   <p className="text-sm text-zinc-500">
                     <span className="font-medium text-zinc-700 dark:text-zinc-300">
@@ -190,7 +192,7 @@ function CommentItem({
                     으로 수정
                   </p>
                 )}
-                <Stack direction="row" gap="sm" justify="end">
+                <div className="flex items-center gap-2 ml-auto">
                   <Button
                     type="button"
                     variant="outline"
@@ -214,8 +216,8 @@ function CommentItem({
                   >
                     댓글 수정
                   </Button>
-                </Stack>
-              </Stack>
+                </div>
+              </div>
               {!isLoggedIn && comment.is_admin && (
                 <p className="text-xs text-zinc-400 mt-2">
                   관리자 댓글은 관리자 로그인 후에만 수정할 수 있습니다.
@@ -314,14 +316,16 @@ function CommentItem({
                     </Stack>
                     {!replyDeleted && (
                       <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                        <button
-                          type="button"
-                          onClick={() => onStartEdit(reply)}
-                          className="p-1 rounded hover:bg-zinc-100 dark:hover:bg-zinc-800"
-                          aria-label="대댓글 수정"
-                        >
-                          <Icon name="settings" size="xs" className="text-zinc-400" />
-                        </button>
+                        {!isLoggedIn && (
+                          <button
+                            type="button"
+                            onClick={() => onStartEdit(reply)}
+                            className="p-1 rounded hover:bg-zinc-100 dark:hover:bg-zinc-800"
+                            aria-label="대댓글 수정"
+                          >
+                            <Icon name="settings" size="xs" className="text-zinc-400" />
+                          </button>
+                        )}
                         <button
                           type="button"
                           onClick={() => onDeleteComment(reply)}
@@ -342,7 +346,7 @@ function CommentItem({
                   </p>
 
                   {!replyDeleted && replyEditing && (
-                    <div className="mt-3 p-3 bg-zinc-50 dark:bg-zinc-800/50 rounded-lg">
+                    <div className="mt-3 p-4 bg-zinc-50 dark:bg-zinc-800/50 rounded-lg w-full">
                       <Textarea
                         placeholder="수정할 내용을 입력하세요..."
                         rows={2}
@@ -351,10 +355,10 @@ function CommentItem({
                         onChange={(e) => onChangeEditContent(e.target.value)}
                         disabled={isProcessingComment}
                       />
-                      <Stack direction="row" gap="sm" justify="between" align="center" wrap>
+                      <div className="flex items-center justify-between gap-3 flex-wrap w-full">
                         {!isLoggedIn ? (
-                          <Stack direction="row" gap="sm" align="center" wrap>
-                            <p className="text-sm text-zinc-500">
+                          <div className="flex items-center gap-3 flex-wrap min-w-0">
+                            <p className="text-sm text-zinc-500 whitespace-nowrap">
                               <span className="font-medium text-zinc-700 dark:text-zinc-300">
                                 {reply.nickname}
                               </span>
@@ -368,7 +372,7 @@ function CommentItem({
                               onChange={(e) => onChangeEditPassword(e.target.value)}
                               disabled={isProcessingComment}
                             />
-                          </Stack>
+                          </div>
                         ) : (
                           <p className="text-sm text-zinc-500">
                             <span className="font-medium text-zinc-700 dark:text-zinc-300">
@@ -377,7 +381,7 @@ function CommentItem({
                             으로 수정
                           </p>
                         )}
-                        <Stack direction="row" gap="sm" justify="end">
+                        <div className="flex items-center gap-2 ml-auto">
                           <Button
                             type="button"
                             variant="outline"
@@ -401,8 +405,8 @@ function CommentItem({
                           >
                             댓글 수정
                           </Button>
-                        </Stack>
-                      </Stack>
+                        </div>
+                      </div>
                       {!isLoggedIn && reply.is_admin && (
                         <p className="text-xs text-zinc-400 mt-2">
                           관리자 댓글은 관리자 로그인 후에만 수정할 수 있습니다.
@@ -495,6 +499,10 @@ export default function CommentSection({ postId, comments: initialComments, prof
 
   const handleStartEdit = (comment: Comment) => {
     if (comment.del_yn === "Y") return;
+    if (isLoggedIn) {
+      alert("관리자는 댓글 수정을 할 수 없습니다. (삭제만 가능)");
+      return;
+    }
     // 비로그인 사용자가 관리자 댓글을 수정하는 보안 구멍 방지
     if (!isLoggedIn && comment.is_admin) {
       alert("관리자 댓글은 관리자 로그인 후에만 수정할 수 있습니다.");
@@ -514,6 +522,10 @@ export default function CommentSection({ postId, comments: initialComments, prof
   const handleSaveEdit = async (comment: Comment) => {
     if (comment.del_yn === "Y") return;
     if (!editingCommentId || editingCommentId !== comment.id) return;
+    if (isLoggedIn) {
+      alert("관리자는 댓글 수정을 할 수 없습니다. (삭제만 가능)");
+      return;
+    }
 
     const nextContent = editContent.trim();
     if (!nextContent) return;
@@ -571,6 +583,10 @@ export default function CommentSection({ postId, comments: initialComments, prof
         passwordToCheck = window.prompt("댓글 작성 시 입력한 비밀번호를 입력하세요.") ?? null;
         if (!passwordToCheck) return;
       }
+    }
+    if (isLoggedIn && comment.is_admin) {
+      alert("관리자는 관리자 댓글을 삭제할 수 없습니다.");
+      return;
     }
 
     const confirmed = window.confirm("이 댓글을 삭제하시겠습니까?");
