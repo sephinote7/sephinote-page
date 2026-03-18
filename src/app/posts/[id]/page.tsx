@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import Link from "next/link";
 import Image from "next/image";
 import { notFound } from "next/navigation";
@@ -7,10 +8,57 @@ import { CommentSection, KakaoMap, PostAdminActions } from "@/components/post";
 import { Stack, Badge, Icon, Avatar, Divider } from "@/components/ui";
 import { formatRelativeTimeFromNow } from "@/lib/date";
 import MarkdownContent from "@/components/markdown/MarkdownContent";
+import { stripMarkdown } from "@/lib/markdown";
 import type { Post, Profile, Comment } from "@/types";
 
 interface PageProps {
   params: Promise<{ id: string }>;
+}
+
+export async function generateMetadata(
+  { params }: PageProps,
+): Promise<Metadata> {
+  const { id } = await params;
+  const supabase = await createServerSupabaseClient();
+
+  const { data } = await supabase
+    .from("posts")
+    .select("id, title, content, category, image_urls, thumbnail_urls, del_yn, is_published")
+    .eq("id", id)
+    .single();
+
+  if (!data || data.del_yn === "Y" || !data.is_published) {
+    return {
+      title: "게시글을 찾을 수 없습니다 | Sephinote",
+      description: "요청하신 게시글이 존재하지 않거나 삭제되었습니다.",
+    };
+  }
+
+  const title = data.title
+    ? `${data.title} | Sephinote`
+    : "Sephinote | Portfolio & Blog";
+
+  const rawDescription = stripMarkdown(data.content || "");
+  const description =
+    rawDescription.slice(0, 120) + (rawDescription.length > 120 ? "…" : "");
+
+  const ogImage = data.thumbnail_urls?.[0] || data.image_urls?.[0] || undefined;
+  const url = `https://www.sephinote.site/posts/${data.id}`;
+
+  return {
+    title,
+    description,
+    openGraph: {
+      title,
+      description,
+      url,
+      type: "article",
+      images: ogImage ? [{ url: ogImage }] : undefined,
+    },
+    alternates: {
+      canonical: url,
+    },
+  };
 }
 
 async function getProfileWithAuth(): Promise<{ profile: Profile | null; isAdmin: boolean }> {
