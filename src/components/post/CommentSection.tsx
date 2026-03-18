@@ -181,7 +181,7 @@ function CommentItem({
                 disabled={isProcessingComment}
               />
               <div className="flex items-center gap-3 w-full flex-nowrap min-w-0">
-                <p className="text-sm text-zinc-500 truncate min-w-0">
+                <p className="text-sm text-zinc-500 w-36 sm:w-48 md:w-60 shrink-0">
                   <span className="font-medium text-zinc-700 dark:text-zinc-300">
                     {comment.nickname}
                   </span>
@@ -230,7 +230,7 @@ function CommentItem({
           {!isDeleted && isDeleting && (
             <div className="mt-3 p-4 bg-zinc-50 dark:bg-zinc-800/50 rounded-lg w-full">
               <div className="flex items-center gap-3 w-full flex-nowrap min-w-0">
-                <p className="text-sm text-zinc-500 truncate min-w-0">
+                <p className="text-sm text-zinc-500 w-36 sm:w-48 md:w-60 shrink-0">
                   <span className="font-medium text-zinc-700 dark:text-zinc-300">
                     {comment.nickname}
                   </span>
@@ -406,7 +406,7 @@ function CommentItem({
                         disabled={isProcessingComment}
                       />
                       <div className="flex items-center gap-3 w-full flex-nowrap min-w-0">
-                        <p className="text-sm text-zinc-500 truncate min-w-0">
+                        <p className="text-sm text-zinc-500 w-36 sm:w-48 md:w-60 shrink-0">
                           <span className="font-medium text-zinc-700 dark:text-zinc-300">
                             {reply.nickname}
                           </span>
@@ -454,7 +454,7 @@ function CommentItem({
                   {!replyDeleted && replyEditing === false && deletingCommentId === reply.id && (
                     <div className="mt-3 p-4 bg-zinc-50 dark:bg-zinc-800/50 rounded-lg w-full">
                       <div className="flex items-center gap-3 w-full flex-nowrap min-w-0">
-                        <p className="text-sm text-zinc-500 truncate min-w-0">
+                        <p className="text-sm text-zinc-500 w-36 sm:w-48 md:w-60 shrink-0">
                           <span className="font-medium text-zinc-700 dark:text-zinc-300">
                             {reply.nickname}
                           </span>
