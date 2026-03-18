@@ -180,8 +180,8 @@ function CommentItem({
                 onChange={(e) => onChangeEditContent(e.target.value)}
                 disabled={isProcessingComment}
               />
-              <div className="flex items-center gap-3 w-full flex-wrap">
-                <p className="text-sm text-zinc-500 whitespace-nowrap">
+              <div className="flex items-center gap-3 w-full flex-nowrap min-w-0">
+                <p className="text-sm text-zinc-500 truncate min-w-0">
                   <span className="font-medium text-zinc-700 dark:text-zinc-300">
                     {comment.nickname}
                   </span>
@@ -191,13 +191,13 @@ function CommentItem({
                   <Input
                     type="password"
                     placeholder="비밀번호 확인"
-                    className="w-40"
+                    className="w-32 sm:w-40 shrink-0"
                     value={editPassword}
                     onChange={(e) => onChangeEditPassword(e.target.value)}
                     disabled={isProcessingComment}
                   />
                 )}
-                <div className="ml-auto flex items-center gap-2">
+                <div className="ml-auto flex items-center gap-2 shrink-0">
                   <Button
                     type="button"
                     variant="outline"
@@ -229,8 +229,8 @@ function CommentItem({
           {/* Inline Delete Form (댓글 본문과 Reply 사이) */}
           {!isDeleted && isDeleting && (
             <div className="mt-3 p-4 bg-zinc-50 dark:bg-zinc-800/50 rounded-lg w-full">
-              <div className="flex items-center gap-3 w-full flex-wrap">
-                <p className="text-sm text-zinc-500 whitespace-nowrap">
+              <div className="flex items-center gap-3 w-full flex-nowrap min-w-0">
+                <p className="text-sm text-zinc-500 truncate min-w-0">
                   <span className="font-medium text-zinc-700 dark:text-zinc-300">
                     {comment.nickname}
                   </span>
@@ -240,13 +240,13 @@ function CommentItem({
                   <Input
                     type="password"
                     placeholder="비밀번호 확인"
-                    className="w-40"
+                    className="w-32 sm:w-40 shrink-0"
                     value={deletePassword}
                     onChange={(e) => onChangeDeletePassword(e.target.value)}
                     disabled={isProcessingComment}
                   />
                 )}
-                <div className="ml-auto flex items-center gap-2">
+                <div className="ml-auto flex items-center gap-2 shrink-0">
                   <Button
                     type="button"
                     variant="outline"
@@ -405,8 +405,8 @@ function CommentItem({
                         onChange={(e) => onChangeEditContent(e.target.value)}
                         disabled={isProcessingComment}
                       />
-                      <div className="flex items-center gap-3 w-full flex-wrap">
-                        <p className="text-sm text-zinc-500 whitespace-nowrap">
+                      <div className="flex items-center gap-3 w-full flex-nowrap min-w-0">
+                        <p className="text-sm text-zinc-500 truncate min-w-0">
                           <span className="font-medium text-zinc-700 dark:text-zinc-300">
                             {reply.nickname}
                           </span>
@@ -416,13 +416,13 @@ function CommentItem({
                           <Input
                             type="password"
                             placeholder="비밀번호 확인"
-                            className="w-40"
+                            className="w-32 sm:w-40 shrink-0"
                             value={editPassword}
                             onChange={(e) => onChangeEditPassword(e.target.value)}
                             disabled={isProcessingComment}
                           />
                         )}
-                        <div className="ml-auto flex items-center gap-2">
+                        <div className="ml-auto flex items-center gap-2 shrink-0">
                           <Button
                             type="button"
                             variant="outline"
@@ -453,8 +453,8 @@ function CommentItem({
 
                   {!replyDeleted && replyEditing === false && deletingCommentId === reply.id && (
                     <div className="mt-3 p-4 bg-zinc-50 dark:bg-zinc-800/50 rounded-lg w-full">
-                      <div className="flex items-center gap-3 w-full flex-wrap">
-                        <p className="text-sm text-zinc-500 whitespace-nowrap">
+                      <div className="flex items-center gap-3 w-full flex-nowrap min-w-0">
+                        <p className="text-sm text-zinc-500 truncate min-w-0">
                           <span className="font-medium text-zinc-700 dark:text-zinc-300">
                             {reply.nickname}
                           </span>
@@ -464,13 +464,13 @@ function CommentItem({
                           <Input
                             type="password"
                             placeholder="비밀번호 확인"
-                            className="w-40"
+                            className="w-32 sm:w-40 shrink-0"
                             value={deletePassword}
                             onChange={(e) => onChangeDeletePassword(e.target.value)}
                             disabled={isProcessingComment}
                           />
                         )}
-                        <div className="ml-auto flex items-center gap-2">
+                        <div className="ml-auto flex items-center gap-2 shrink-0">
                           <Button
                             type="button"
                             variant="outline"
