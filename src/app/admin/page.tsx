@@ -3,6 +3,7 @@ import { redirect } from "next/navigation";
 import { createServerSupabaseClient } from "@/lib/supabase-server";
 import { AdminLayout } from "@/components/layout";
 import { StatCard, Card, CardContent, Stack, Grid, Badge, Button, Icon } from "@/components/ui";
+import { stripMarkdown } from "@/lib/markdown";
 import type { Profile, Post, Comment } from "@/types";
 
 async function getProfileAndStats() {
@@ -170,23 +171,29 @@ export default async function AdminDashboardPage() {
           {/* Recent Posts */}
           <Card>
             <CardContent>
-              <Stack direction="row" justify="between" align="center" className="mb-4">
+              <Stack direction="row" justify="between" align="center" className="mb-4 flex-wrap gap-3">
                 <h2 className="text-lg font-semibold text-zinc-900 dark:text-zinc-100">
                   Recent Posts
                 </h2>
-                <Stack direction="row" gap="sm">
+                <Stack direction="row" gap="sm" className="flex-wrap items-center">
                   <Link href="/admin/trash/posts">
-                    <Button variant="ghost" size="sm">
+                    <Button type="button" variant="ghost" size="sm" className="whitespace-nowrap">
                       삭제된 게시글
                     </Button>
                   </Link>
                   <Link href="/admin/posts">
-                    <Button variant="outline" size="sm">
+                    <Button type="button" variant="outline" size="sm" className="whitespace-nowrap">
                       전체 보기
                     </Button>
                   </Link>
                   <Link href="/admin/write">
-                    <Button variant="primary" size="sm" leftIcon={<Icon name="plus" size="sm" />}>
+                    <Button
+                      type="button"
+                      variant="primary"
+                      size="sm"
+                      className="whitespace-nowrap"
+                      leftIcon={<Icon name="plus" size="sm" />}
+                    >
                       New Post
                     </Button>
                   </Link>
@@ -196,29 +203,29 @@ export default async function AdminDashboardPage() {
                 {recentPosts?.map((post) => (
                   <div
                     key={post.id}
-                    className="flex items-center gap-4 p-3 rounded-lg hover:bg-zinc-50 dark:hover:bg-zinc-800 transition-colors"
+                    className="p-3 rounded-lg bg-zinc-50 dark:bg-zinc-800/50"
                   >
-                    <div className="w-12 h-12 bg-zinc-100 dark:bg-zinc-800 rounded-lg flex items-center justify-center shrink-0">
-                      <Icon name="bookmark" size="sm" className="text-zinc-400" />
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <p className="font-medium text-zinc-900 dark:text-zinc-100 truncate">
+                    <Stack direction="row" gap="sm" align="center" className="mb-2 justify-between">
+                      <p className="font-medium text-sm text-zinc-900 dark:text-zinc-100 truncate">
                         {post.title}
                       </p>
-                      <Stack direction="row" gap="sm" align="center">
-                        <Badge variant={categoryColors[post.category]} size="sm">
-                          {post.category}
-                        </Badge>
-                        <span className="text-xs text-zinc-500">
-                          {new Date(post.created_at).toLocaleDateString("ko-KR")}
-                        </span>
-                      </Stack>
-                    </div>
-                    <Link href={`/posts/${post.id}`}>
-                      <Button variant="ghost" size="icon">
-                        <Icon name="arrow-right" size="sm" />
-                      </Button>
-                    </Link>
+                      <Link href={`/posts/${post.id}`}>
+                        <Button type="button" variant="ghost" size="icon" aria-label="게시글로 이동">
+                          <Icon name="arrow-right" size="sm" />
+                        </Button>
+                      </Link>
+                    </Stack>
+                    <Stack direction="row" gap="sm" align="center" className="mb-2">
+                      <Badge variant={categoryColors[post.category]} size="sm">
+                        {post.category}
+                      </Badge>
+                      <span className="text-xs text-zinc-500">
+                        {new Date(post.created_at).toLocaleDateString("ko-KR")}
+                      </span>
+                    </Stack>
+                    <p className="text-sm text-zinc-600 dark:text-zinc-400 line-clamp-2">
+                      {stripMarkdown(post.content || "")}
+                    </p>
                   </div>
                 ))}
                 {(!recentPosts || recentPosts.length === 0) && (
@@ -231,18 +238,18 @@ export default async function AdminDashboardPage() {
           {/* Recent Comments */}
           <Card>
             <CardContent>
-              <Stack direction="row" justify="between" align="center" className="mb-4">
+              <Stack direction="row" justify="between" align="center" className="mb-4 flex-wrap gap-3">
                 <h2 className="text-lg font-semibold text-zinc-900 dark:text-zinc-100">
                   Recent Comments
                 </h2>
-                <Stack direction="row" gap="sm">
+                <Stack direction="row" gap="sm" className="flex-wrap items-center">
                   <Link href="/admin/trash/comments">
-                    <Button variant="ghost" size="sm">
+                    <Button type="button" variant="ghost" size="sm" className="whitespace-nowrap">
                       삭제된 댓글
                     </Button>
                   </Link>
                   <Link href="/admin/comments">
-                    <Button variant="outline" size="sm">
+                    <Button type="button" variant="outline" size="sm" className="whitespace-nowrap">
                       전체 보기
                     </Button>
                   </Link>
@@ -270,7 +277,7 @@ export default async function AdminDashboardPage() {
                         </span>
                       </Stack>
                       <Link href={`/posts/${comment.post_id}#comment-${comment.id}`}>
-                        <Button variant="ghost" size="icon">
+                        <Button type="button" variant="ghost" size="icon" aria-label="댓글 위치로 이동">
                           <Icon name="arrow-right" size="sm" />
                         </Button>
                       </Link>
